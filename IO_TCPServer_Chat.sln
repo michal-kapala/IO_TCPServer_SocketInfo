@@ -1,9 +1,9 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.28307.960
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30611.23
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IO_TCPServer_SocketInfo", "IO_TCPServer_SocketInfo\IO_TCPServer_SocketInfo.csproj", "{90F64285-61B6-4C05-9A72-4C0CF928A8A6}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IO_TCPServer", "IO_TCPServer_SocketInfo\IO_TCPServer.csproj", "{90F64285-61B6-4C05-9A72-4C0CF928A8A6}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IO_TCPServer_API", "IO_TCPServer_API\IO_TCPServer_API.csproj", "{930CDD0E-F382-48D8-9388-3EAAE3C93FB4}"
 EndProject

@@ -1,7 +1,7 @@
 ﻿using System;
 using IO_TCPServer_API;
 
-namespace IO_TCPServer_SocketInfo
+namespace IO_TCPServer
 {
     class Program
     {
