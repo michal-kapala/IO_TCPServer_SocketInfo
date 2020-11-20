@@ -2,6 +2,7 @@
 using System.Net.Sockets;
 using System.Net;
 using System.IO;
+using System.Text.RegularExpressions;
 
 namespace IO_TCPServer_API
 {
@@ -28,6 +29,8 @@ namespace IO_TCPServer_API
                 while ((dataSize = stream.Read(buffer, 0, buffer.Length)) != 0)
                 {
                     string command = System.Text.Encoding.UTF8.GetString(buffer, 0, dataSize);
+                    Regex sanitize = new Regex("[^a-zA-Z0-9#]");
+                    command = sanitize.Replace(command, "");
                     TextProtocol.Process(client, command);
                     if (command == "#disconnect") break;
                 }
