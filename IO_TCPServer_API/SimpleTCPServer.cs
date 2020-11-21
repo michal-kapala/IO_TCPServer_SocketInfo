@@ -42,7 +42,7 @@ namespace IO_TCPServer_API
         }
         public void TransmissionCallbackStub(IAsyncResult result)
         {
-            ConsoleLogger.Log("Client " + TextProtocol.LastDCedClient + " connection has been closed", LogSource.SERVER);
+            ConsoleLogger.Log(TextProtocol.LastDCedClient + " connection has been closed", LogSource.SERVER);
         }
 
         public void Listen()

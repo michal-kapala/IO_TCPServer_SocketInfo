@@ -44,15 +44,15 @@ namespace IO_TCPServer_API
 
         public static string GetSocketInfo(TcpClient client, bool bFull)
         {
-            IPEndPoint clientEndPoint = (IPEndPoint)client.Client.LocalEndPoint;
+            IPEndPoint clientEndPoint = (IPEndPoint)client.Client.RemoteEndPoint;
             string clientSocket = clientEndPoint.Address.ToString() + ":" + clientEndPoint.Port.ToString();
-            string socketInfo = "client endpoint: " + clientSocket;
+            string socketInfo = "client: " + clientSocket;
             if (bFull)
             {
                 socketInfo += "\n";
-                IPEndPoint serverEndPoint = (IPEndPoint)client.Client.RemoteEndPoint;
+                IPEndPoint serverEndPoint = (IPEndPoint)client.Client.LocalEndPoint;
                 string serverSocket = serverEndPoint.Address.ToString() + ":" + serverEndPoint.Port.ToString();
-                socketInfo += "server endpoint: " + serverSocket + "\n";
+                socketInfo += "server: " + serverSocket + "\n";
             }
             return socketInfo;
         }
