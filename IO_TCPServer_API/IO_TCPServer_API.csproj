@@ -41,6 +41,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Helper.cs" />
     <Compile Include="ConsoleLogger.cs" />
     <Compile Include="TextProtocol.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
