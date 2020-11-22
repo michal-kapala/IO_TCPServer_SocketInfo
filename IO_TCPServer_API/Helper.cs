@@ -4,17 +4,12 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Net.Sockets;
+using System.Security.Cryptography;
 
 namespace IO_TCPServer_API
 {
     static class Helper
     {
-        public static KeyValuePair<TKey, TValue> GetEntry<TKey, TValue>
-            (this IDictionary<TKey, TValue> dictionary, TKey key)
-        {
-            return new KeyValuePair<TKey, TValue>(key, dictionary[key]);
-        }
-
         //since NetworkStream.Read() doesnt wait for user input
         public static int ReadNetStream(TcpClient client, byte[] buffer, int offset, int bufSize)
         {
@@ -49,6 +44,18 @@ namespace IO_TCPServer_API
             byte[] copy = new byte[index];
             for (int i = 0; i < index; i++) copy[i] = buffer[i];
             return System.Text.Encoding.UTF8.GetString(copy);
+        }
+
+        public static string MakeSHA256Hash(string input)
+        {
+            byte[] data = Encoding.Unicode.GetBytes(input);
+            byte[] hash = new byte[32];
+            using (SHA256CryptoServiceProvider sha256 = new SHA256CryptoServiceProvider())
+            {
+                hash = sha256.ComputeHash(data);
+            }
+            string result = Encoding.Unicode.GetString(hash);
+            return result;
         }
     }
 }

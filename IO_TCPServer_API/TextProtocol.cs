@@ -3,10 +3,11 @@ using System.Collections.Generic;
 using System.Net.Sockets;
 using System.Net;
 using System.IO;
+using System.Linq;
 
 namespace IO_TCPServer_API
 {
-    class TextProtocol
+    public class TextProtocol
     {
         public enum Status
         {
@@ -17,7 +18,9 @@ namespace IO_TCPServer_API
             HELP,
             DISCONNECTED,
             MESSAGE,
-            EXCEPTION
+            EXCEPTION,
+            CHAT_JOIN,
+            CHAT_LEAVE
         };
 
         static string lastDcedClient = null;
@@ -27,7 +30,9 @@ namespace IO_TCPServer_API
 #register    register on chat
 #disconnect  terminate connection to chat
 > ";
-        public static Status Process(TcpClient client, string command, string login, string password)
+        public static string Help => help;
+
+        public static Status Process(SimpleTCPServer server, TcpClient client, string command, string login, string password)
         {
             NetworkStream stream = client.GetStream();
             switch (command)
@@ -35,43 +40,67 @@ namespace IO_TCPServer_API
                 default:
                     return Status.MESSAGE;
                 case "#help":
-                    SendHelpMsg(client);
+                    SendMsgToClient(client, help);
                     ConsoleLogger.Log("Sent help", LogSource.TEXT, LogLevel.INFO);
                     return Status.HELP;
-                case "#signin":
-                    if(DBManager.FindUser(login, password))
+                case "#chat":
+                    User user = server.UserManager.GetUser(login);
+                    if(user == null)
                     {
-                        ConsoleLogger.Log("User " + login + " connected to chat.", LogSource.TEXT, LogLevel.INFO);
+                        SendMsgToClient(client, "You're logged out, please sign in first.\n");
+                        return Status.WRONG_CREDENTIALS;
+                    }
+                    user.ChatMode = !user.ChatMode;
+                    if (user.ChatMode)
+                    {
+                        ConsoleLogger.Log("User " + login + " joined chat", LogSource.USER, LogLevel.INFO);
+                        SendMsgToClient(client, "You've joined the chat.\n");
+                        return Status.CHAT_JOIN;
+                    }
+                    else
+                    {
+                        ConsoleLogger.Log("User " + login + "left chat", LogSource.USER, LogLevel.INFO);
+                        SendMsgToClient(client, "You've left the chat.\n");
+                        return Status.CHAT_LEAVE;
+                    }
+                case "#signin":
+                    if(DBManager.ValidateUser(login, password))
+                    {
+                        try
+                        {
+                            server.UserManager.SignIn(client, login, password);
+                        }
+                        catch(Exception ex)
+                        {
+                            ConsoleLogger.Log("Sign-in exception:\n" + ex.ToString(), LogSource.TEXT, LogLevel.ERROR);
+                        }
+                        ConsoleLogger.Log("User " + login + " signed in.", LogSource.TEXT, LogLevel.INFO);
+                        SendMsgToClient(client, "You have been logged in.\n");
                         return Status.SIGNED_IN;
                     }
                     else
                     {
-                        ConsoleLogger.Log("Wrong credentials", LogSource.TEXT, LogLevel.ERROR);
+                        ConsoleLogger.Log("Wrong credentials from " + GetSocketInfo(client, false), LogSource.TEXT, LogLevel.INFO);
+                        SendMsgToClient(client, "Wrong login or password, please try again.\n");
                         return Status.WRONG_CREDENTIALS;
                     }
                 case "#register":
-                    try
-                    {
                         if (DBManager.AddUser(login, password))
                         {
-                            ConsoleLogger.Log("User " + login + " already exists", LogSource.TEXT, LogLevel.ERROR);
-                            return Status.EXISTS;
-                        }
-                        else
-                        {
                             ConsoleLogger.Log("User " + login + " registered", LogSource.TEXT, LogLevel.INFO);
+                            SendMsgToClient(client, "You've been successfully registered.\n");
                             return Status.REGISTERED;
                         }
-                    }
-                    catch(Exception ex)
-                    {
-                        ConsoleLogger.Log("Database exception:\n" + ex.ToString(), LogSource.DB, LogLevel.ERROR);
-                        return Status.EXCEPTION;
-                    }
+                        else
+                        { 
+                            ConsoleLogger.Log("User " + login + " already exists", LogSource.TEXT, LogLevel.ERROR);
+                            SendMsgToClient(client, "Login is unavailable, please use a different one.\n");
+                            return Status.EXISTS;
+                        }
                 case "#disconnect":
                     lastDcedClient = GetSocketInfo(client, false);
                     ConsoleLogger.Log("Client " + lastDcedClient + " disconnected from session", LogSource.TEXT, LogLevel.INFO);
-                    client.Close();
+                    SendMsgToClient(client, "You have disconnected from server.\n");
                     return Status.DISCONNECTED;
             }
         }
@@ -91,29 +120,27 @@ namespace IO_TCPServer_API
             return socketInfo;
         }
 
-        public static void SendHelpMsg(TcpClient client)
+        public static void SendMsgToClient(TcpClient client, string msg)
         {
-            byte[] helpMsg = System.Text.Encoding.Unicode.GetBytes(help);
-            foreach (byte b in helpMsg) client.GetStream().WriteByte(b);
+            byte[] buffer = System.Text.Encoding.Unicode.GetBytes(msg);
+            foreach (byte b in buffer) client.GetStream().WriteByte(b);
         }
 
-        public static KeyValuePair<string, string> GetCredentials(TcpClient client)
+        public static void BroadcastMessages(SimpleTCPServer server)
         {
-            int bufSize = 1024;
-            byte[] loginBuf = new byte[bufSize];
-            byte[] passwordBuf = new byte[bufSize];
-            string loginMsg = "login: ";
-            byte[] loginByte = System.Text.Encoding.Unicode.GetBytes(loginMsg);
-            foreach (byte b in loginByte) client.GetStream().WriteByte(b);
-            Helper.ReadNetStream(client, loginBuf, 2, bufSize);
-            string passwordMsg = "password: ";
-            byte[] passwordByte = System.Text.Encoding.Unicode.GetBytes(passwordMsg);
-            foreach (byte b in passwordByte) client.GetStream().WriteByte(b);
-            client.GetStream().Read(passwordBuf, 0, bufSize);
-            string login = Helper.MakeString(loginBuf);
-            string password = Helper.MakeString(passwordBuf);
-
-            return new KeyValuePair<string, string>(login, password);
+            string clear = String.Concat(Enumerable.Repeat("\n", 100));
+            byte[] buffer = new byte[1024];
+            foreach (User u in server.UserManager.activeUsers)
+            {
+                u.Client.GetStream().Write(System.Text.Encoding.Unicode.GetBytes(clear), 0, clear.Length);
+                foreach (string message in server.messages)
+                {
+                    buffer = System.Text.Encoding.Unicode.GetBytes(message + "\n");
+                    u.Client.GetStream().Write(buffer, 0, buffer.Length);
+                }
+                buffer = System.Text.Encoding.Unicode.GetBytes("> ");
+                u.Client.GetStream().Write(buffer, 0, buffer.Length);
+            }
         }
     }
 }

@@ -10,7 +10,8 @@ namespace IO_TCPServer_API
     {
         SERVER,
         TEXT,
-        DB
+        DB,
+        USER
     }
 
     public enum LogLevel
@@ -33,10 +34,13 @@ namespace IO_TCPServer_API
                     Console.WriteLine(DateTime.Now.ToString() + "\t[" + Enum.GetName(typeof(LogLevel), level) + "]\t[SERVER]\t" + text);
                     break;
                 case LogSource.TEXT:
-                    Console.WriteLine(DateTime.Now.ToString() + "\t[" + Enum.GetName(typeof(LogLevel), LogLevel) + "]\t[TEXT]\t\t" + text);
+                    Console.WriteLine(DateTime.Now.ToString() + "\t[" + Enum.GetName(typeof(LogLevel), level) + "]\t[TEXT]\t\t" + text);
                     break;
                 case LogSource.DB:
-                    Console.WriteLine(DateTime.Now.ToString() + "\t[" + Enum.GetName(typeof(LogLevel), LogLevel) + "]\t[DB]\t\t" + text);
+                    Console.WriteLine(DateTime.Now.ToString() + "\t[" + Enum.GetName(typeof(LogLevel), level) + "]\t[DB]\t\t" + text);
+                    break;
+                case LogSource.USER:
+                    Console.WriteLine(DateTime.Now.ToString() + "\t[" + Enum.GetName(typeof(LogLevel), level) + "]\t[USER]\t\t" + text);
                     break;
                 default: break;
             }

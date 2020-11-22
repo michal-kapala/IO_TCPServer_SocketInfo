@@ -4,41 +4,27 @@ using System.Net;
 using System.IO;
 using System.Text.RegularExpressions;
 using System.Collections.Generic;
-using System.Linq;
+using System.Threading;
 
 namespace IO_TCPServer_API
 {
     public class SimpleTCPServer
-    {
-        
+    { 
         TcpListener listener;
         public delegate void TransmissionDelegate(TcpClient client);
-        List<string> messages;
-        Dictionary<int, TcpClient> clients;
-        List<string> db;
+        UserManager userManager;
+        public UserManager UserManager { get => userManager; }
+        List<User> activeUsers;
+        public List<string> messages;
+        public List<User> Users { get; }
+        //Dictionary<int, TcpClient> clients;
 
         public SimpleTCPServer(string ip, ushort port, uint bufferSize)
         {
             listener = new TcpListener(IPAddress.Parse(ip), port);
+            userManager = new UserManager();
+            activeUsers = new List<User>();
             messages = new List<string>();
-            clients = new Dictionary<int, TcpClient>();
-            db = new List<string>();
-        }
-
-        private void BroadcastMessages()
-        {
-            string clear = String.Concat(Enumerable.Repeat("\n", 100));
-            byte[] buffer = new byte[1024];
-            foreach (KeyValuePair<int, TcpClient> client in clients){
-                client.Value.GetStream().Write(System.Text.Encoding.Unicode.GetBytes(clear), 0, clear.Length);
-                foreach (string message in messages)
-                {
-                    buffer = System.Text.Encoding.Unicode.GetBytes(message + "\n");
-                    client.Value.GetStream().Write(buffer, 0, buffer.Length);
-                }
-                buffer = System.Text.Encoding.Unicode.GetBytes("> ");
-                client.Value.GetStream().Write(buffer, 0, buffer.Length);
-            }
         }
 
         public void HandleConnection(TcpClient client)
@@ -51,7 +37,8 @@ namespace IO_TCPServer_API
             TextProtocol.Status status = TextProtocol.Status.HELP;
             try
             {
-                TextProtocol.SendHelpMsg(client);
+                TextProtocol.SendMsgToClient(client, TextProtocol.Help);
+                WAKE:
                 while ((dataSize = stream.Read(buffer, 0, buffer.Length)) != 0)
                 {
                     string command = System.Text.Encoding.UTF8.GetString(buffer, 0, dataSize);
@@ -59,12 +46,40 @@ namespace IO_TCPServer_API
                     switch (command)
                     {
                         case "#register":
+                            creds = UserManager.GetCredentials(client);
+                            status = TextProtocol.Process(this, client, command, creds.Key, creds.Value);
+                            break;
                         case "#signin":
-                            creds = TextProtocol.GetCredentials(client);
-                            status = TextProtocol.Process(client, command, creds.Key, creds.Value);
+                            creds = UserManager.GetCredentials(client);
+                            status = TextProtocol.Process(this, client, command, creds.Key, creds.Value);
+                            if (status == TextProtocol.Status.SIGNED_IN)
+                                activeUsers.Add(new User(client, creds.Key, creds.Value));
+                            break;
+                        case "#chat":
+                            User user = UserManager.GetUser(client);
+                            status = TextProtocol.Process(this, client, command, user.Login, null);
+                            //chat loop
+                            if (status == TextProtocol.Status.CHAT_JOIN)
+                            {
+                                while ((dataSize = stream.Read(buffer, 0, buffer.Length)) != 0)
+                                {
+                                    string msg = System.Text.Encoding.UTF8.GetString(buffer, 0, dataSize);
+                                    msg = sanitize.Replace(msg, "");
+                                    if (msg == "#chat")
+                                        status = TextProtocol.Process(this, client, msg, user.Login, null);
+                                    if (status == TextProtocol.Status.CHAT_LEAVE)
+                                        break;
+                                    if (status == TextProtocol.Status.CHAT_JOIN)
+                                    {
+                                        messages.Add(user.Login + ": " + msg);
+                                        TextProtocol.BroadcastMessages(this);
+                                    }
+                                    while (!client.GetStream().DataAvailable && client != null) Thread.Sleep(500);
+                                }
+                            }
                             break;
                         default:
-                            status = TextProtocol.Process(client, command, null, null);
+                            status = TextProtocol.Process(this, client, command, null, null);
                             break;
                     }
                     switch(status)
@@ -73,31 +88,19 @@ namespace IO_TCPServer_API
                         case TextProtocol.Status.SIGNED_IN:
                             break;
                         case TextProtocol.Status.DISCONNECTED:
-                            break;
+                            client.Close();
+                            return;
                         case TextProtocol.Status.EXCEPTION:
+                            client.Close();
+                            return;
+                        case TextProtocol.Status.WRONG_CREDENTIALS:
+                            UserManager.HandleWrongCredentials(this, client, command);
                             break;
                     }
                 }
-                if(status == TextProtocol.Status.SIGNED_IN)
-                {
-                    clients.Add(client.GetHashCode(), client);
-                }
-                else
-                {
-                    return;
-                }
-                while((dataSize = stream.Read(buffer, 0, buffer.Length)) != 0)
-                {
-                    string command = System.Text.Encoding.UTF8.GetString(buffer, 0, dataSize);
-                    command = sanitize.Replace(command, "");
-                    status = TextProtocol.Process(client, command, null, null);
-                    if (status == TextProtocol.Status.DISCONNECTED)
-                    {
-                        break;
-                    }
-                    messages.Add(command);
-                    BroadcastMessages();
-                }
+                while (!client.GetStream().DataAvailable) Thread.Sleep(1000);
+                goto WAKE;
+                
             }
             catch (IOException e)
             {

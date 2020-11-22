@@ -60,16 +60,14 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="DBManager.cs" />
+    <Compile Include="Managers\DBManager.cs" />
     <Compile Include="Helper.cs" />
-    <Compile Include="ConsoleLogger.cs" />
+    <Compile Include="Managers\ConsoleLogger.cs" />
     <Compile Include="TextProtocol.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SimpleTCPServer.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="App.config" />
-    <None Include="packages.config" />
+    <Compile Include="User.cs" />
+    <Compile Include="Managers\UserManager.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
