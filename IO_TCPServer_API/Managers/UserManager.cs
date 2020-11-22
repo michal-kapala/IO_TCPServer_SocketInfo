@@ -24,7 +24,8 @@ namespace IO_TCPServer_API
             string loginMsg = "login: ";
             byte[] loginByte = Encoding.Unicode.GetBytes(loginMsg);
             foreach (byte b in loginByte) client.GetStream().WriteByte(b);
-            Helper.ReadNetStream(client, loginBuf, 2, bufSize);
+            //Helper.ReadNetStream(client, loginBuf, 2, bufSize);
+            client.GetStream().Read(loginBuf, 0, bufSize);
             string passwordMsg = "password: ";
             byte[] passwordByte = Encoding.Unicode.GetBytes(passwordMsg);
             foreach (byte b in passwordByte) client.GetStream().WriteByte(b);

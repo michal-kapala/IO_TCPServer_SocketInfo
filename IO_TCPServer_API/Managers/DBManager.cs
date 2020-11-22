@@ -9,7 +9,7 @@ namespace IO_TCPServer_API
 {
     public class DBManager
     {
-        static SQLiteConnection connection = new SQLiteConnection(@"Data Source=C:\Users\Michal\Desktop\szkoła\IO_TCPServer_SocketInfo\IO_TCPServer_API\bin\Debug\database.sqlite3");
+        static SQLiteConnection connection = new SQLiteConnection(@"Data Source=database.sqlite3");
 
         public static void Connect()
         {
