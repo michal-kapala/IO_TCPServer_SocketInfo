@@ -16,11 +16,12 @@ namespace IO_TCPServer_API
             EXISTS,
             HELP,
             DISCONNECTED,
-            MESSAGE
+            MESSAGE,
+            EXCEPTION
         };
 
         static string lastDcedClient = null;
-        public static string LastDCedClient => lastDcedClient != null ? lastDcedClient : "null";
+        public static string LastDCedClient => lastDcedClient ?? "null";
         const string help = @"#help       display this list
 #signin      sign in to chat
 #register    register on chat
@@ -28,7 +29,6 @@ namespace IO_TCPServer_API
 > ";
         public static Status Process(TcpClient client, string command, string login, string password)
         {
-
             NetworkStream stream = client.GetStream();
             switch (command)
             {
@@ -36,33 +36,41 @@ namespace IO_TCPServer_API
                     return Status.MESSAGE;
                 case "#help":
                     SendHelpMsg(client);
-                    ConsoleLogger.Log("Sent help", LogSource.TEXT);
+                    ConsoleLogger.Log("Sent help", LogSource.TEXT, LogLevel.INFO);
                     return Status.HELP;
                 case "#signin":
-                    if(true/*DBManager.findUser(login, password)*/)
+                    if(DBManager.FindUser(login, password))
                     {
-                        ConsoleLogger.Log("User " + login + " connected to chat.", LogSource.TEXT);
+                        ConsoleLogger.Log("User " + login + " connected to chat.", LogSource.TEXT, LogLevel.INFO);
                         return Status.SIGNED_IN;
                     }
                     else
                     {
-                        ConsoleLogger.Log("Wrong credentials", LogSource.TEXT);
+                        ConsoleLogger.Log("Wrong credentials", LogSource.TEXT, LogLevel.ERROR);
                         return Status.WRONG_CREDENTIALS;
                     }
                 case "#register":
-                    if (true/*DBManager.addUser(login, password)*/)
+                    try
                     {
-                        ConsoleLogger.Log("User " + login + " is already exists", LogSource.TEXT);
-                        return Status.EXISTS;
+                        if (DBManager.AddUser(login, password))
+                        {
+                            ConsoleLogger.Log("User " + login + " already exists", LogSource.TEXT, LogLevel.ERROR);
+                            return Status.EXISTS;
+                        }
+                        else
+                        {
+                            ConsoleLogger.Log("User " + login + " registered", LogSource.TEXT, LogLevel.INFO);
+                            return Status.REGISTERED;
+                        }
                     }
-                    else
+                    catch(Exception ex)
                     {
-                        ConsoleLogger.Log("User " + login + " registered", LogSource.TEXT);
-                        return Status.REGISTERED;
+                        ConsoleLogger.Log("Database exception:\n" + ex.ToString(), LogSource.DB, LogLevel.ERROR);
+                        return Status.EXCEPTION;
                     }
                 case "#disconnect":
                     lastDcedClient = GetSocketInfo(client, false);
-                    ConsoleLogger.Log("Client " + lastDcedClient + " disconnected from session", LogSource.TEXT);
+                    ConsoleLogger.Log("Client " + lastDcedClient + " disconnected from session", LogSource.TEXT, LogLevel.INFO);
                     client.Close();
                     return Status.DISCONNECTED;
             }
@@ -70,15 +78,15 @@ namespace IO_TCPServer_API
 
         public static string GetSocketInfo(TcpClient client, bool bFull)
         {
-            IPEndPoint clientEndPoint = (IPEndPoint)client.Client.LocalEndPoint;
+            IPEndPoint clientEndPoint = (IPEndPoint)client.Client.RemoteEndPoint;
             string clientSocket = clientEndPoint.Address.ToString() + ":" + clientEndPoint.Port.ToString();
-            string socketInfo = "client endpoint: " + clientSocket;
+            string socketInfo = "client: " + clientSocket;
             if (bFull)
             {
                 socketInfo += "\n";
-                IPEndPoint serverEndPoint = (IPEndPoint)client.Client.RemoteEndPoint;
+                IPEndPoint serverEndPoint = (IPEndPoint)client.Client.LocalEndPoint;
                 string serverSocket = serverEndPoint.Address.ToString() + ":" + serverEndPoint.Port.ToString();
-                socketInfo += "server endpoint: " + serverSocket + "\n";
+                socketInfo += "server: " + serverSocket + "\n";
             }
             return socketInfo;
         }
@@ -97,13 +105,13 @@ namespace IO_TCPServer_API
             string loginMsg = "login: ";
             byte[] loginByte = System.Text.Encoding.Unicode.GetBytes(loginMsg);
             foreach (byte b in loginByte) client.GetStream().WriteByte(b);
-            client.GetStream().Read(loginBuf, 0, bufSize);
+            Helper.ReadNetStream(client, loginBuf, 2, bufSize);
             string passwordMsg = "password: ";
             byte[] passwordByte = System.Text.Encoding.Unicode.GetBytes(passwordMsg);
             foreach (byte b in passwordByte) client.GetStream().WriteByte(b);
             client.GetStream().Read(passwordBuf, 0, bufSize);
-            string login = System.Text.Encoding.Unicode.GetString(loginBuf);
-            string password = System.Text.Encoding.Unicode.GetString(passwordBuf);
+            string login = Helper.MakeString(loginBuf);
+            string password = Helper.MakeString(passwordBuf);
 
             return new KeyValuePair<string, string>(login, password);
         }

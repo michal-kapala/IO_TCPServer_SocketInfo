@@ -6,23 +6,37 @@ using System.Threading.Tasks;
 
 namespace IO_TCPServer_API
 {
-    enum LogSource
+    public enum LogSource
     {
         SERVER,
-        TEXT
+        TEXT,
+        DB
     }
 
-    class ConsoleLogger
+    public enum LogLevel
     {
-        public static void Log(string text, LogSource src)
+        DEBUG,
+        INFO,
+        ERROR
+    }
+
+    public class ConsoleLogger
+    {
+        public static LogLevel LogLevel { get; set; }
+
+        public static void Log(string text, LogSource src, LogLevel level)
         {
-            switch(src)
+            if (level < LogLevel) return;
+            switch (src)
             {
                 case LogSource.SERVER:
-                    Console.WriteLine(DateTime.Now.ToString() + "\t[SERVER]\t" + text);
+                    Console.WriteLine(DateTime.Now.ToString() + "\t[" + Enum.GetName(typeof(LogLevel), level) + "]\t[SERVER]\t" + text);
                     break;
                 case LogSource.TEXT:
-                    Console.WriteLine(DateTime.Now.ToString() + "\t[TEXT]\t\t" + text);
+                    Console.WriteLine(DateTime.Now.ToString() + "\t[" + Enum.GetName(typeof(LogLevel), LogLevel) + "]\t[TEXT]\t\t" + text);
+                    break;
+                case LogSource.DB:
+                    Console.WriteLine(DateTime.Now.ToString() + "\t[" + Enum.GetName(typeof(LogLevel), LogLevel) + "]\t[DB]\t\t" + text);
                     break;
                 default: break;
             }

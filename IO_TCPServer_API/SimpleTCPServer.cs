@@ -67,9 +67,15 @@ namespace IO_TCPServer_API
                             status = TextProtocol.Process(client, command, null, null);
                             break;
                     }
-                    if (status == TextProtocol.Status.SIGNED_IN || status == TextProtocol.Status.DISCONNECTED)
+                    switch(status)
                     {
-                        break;
+                        default: break;
+                        case TextProtocol.Status.SIGNED_IN:
+                            break;
+                        case TextProtocol.Status.DISCONNECTED:
+                            break;
+                        case TextProtocol.Status.EXCEPTION:
+                            break;
                     }
                 }
                 if(status == TextProtocol.Status.SIGNED_IN)
@@ -95,18 +101,18 @@ namespace IO_TCPServer_API
             }
             catch (IOException e)
             {
-                ConsoleLogger.Log("Data transmission exception: " + e.ToString(), LogSource.SERVER);
+                ConsoleLogger.Log("Data transmission exception: " + e.ToString(), LogSource.SERVER, LogLevel.ERROR);
             }
         }
         public void TransmissionCallbackStub(IAsyncResult result)
         {
-            ConsoleLogger.Log("Client " + TextProtocol.LastDCedClient + " connection has been closed", LogSource.SERVER);
+            ConsoleLogger.Log("Client " + TextProtocol.LastDCedClient + " connection has been closed", LogSource.SERVER, LogLevel.INFO);
         }
 
         public void Listen()
         {
             listener.Start();
-            ConsoleLogger.Log("Server is running", LogSource.SERVER);
+            ConsoleLogger.Log("Server is running", LogSource.SERVER, LogLevel.INFO);
         }
 
         public void AcceptClient()
@@ -114,7 +120,7 @@ namespace IO_TCPServer_API
             while (true)
             {
                 TcpClient client = listener.AcceptTcpClient();
-                ConsoleLogger.Log("New connection established: " + TextProtocol.GetSocketInfo(client, false), LogSource.SERVER);
+                ConsoleLogger.Log("New connection established: " + TextProtocol.GetSocketInfo(client, false), LogSource.SERVER, LogLevel.INFO);
                 TransmissionDelegate transDelegate = new TransmissionDelegate(HandleConnection);
                 transDelegate.BeginInvoke(client, TransmissionCallbackStub, client);
             }
