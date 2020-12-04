@@ -7,7 +7,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IO_TCPServer", "IO_TCPServe
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IO_TCPServer_API", "IO_TCPServer_API\IO_TCPServer_API.csproj", "{930CDD0E-F382-48D8-9388-3EAAE3C93FB4}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Client_WinForms", "WindowsFormsApp1\Client_WinForms.csproj", "{5C1789B7-5C67-44C9-AECA-4BD13D39C29E}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Client_WinForms", "Client_WinForms\Client_WinForms.csproj", "{5C1789B7-5C67-44C9-AECA-4BD13D39C29E}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
