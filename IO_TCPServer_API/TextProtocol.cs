@@ -44,7 +44,7 @@ namespace IO_TCPServer_API
                     ConsoleLogger.Log("Sent help", LogSource.TEXT, LogLevel.INFO);
                     return Status.HELP;
                 case "#chat":
-                    User user = server.UserManager.GetUser(login);
+                    User user = server.userManager.GetUser(login);
                     if(user == null)
                     {
                         SendMsgToClient(client, "You're logged out, please sign in first.\n");
@@ -68,7 +68,7 @@ namespace IO_TCPServer_API
                     {
                         try
                         {
-                            server.UserManager.SignIn(client, login, password);
+                            server.userManager.SignIn(client, login, password);
                         }
                         catch(Exception ex)
                         {
@@ -130,7 +130,7 @@ namespace IO_TCPServer_API
         {
             string clear = String.Concat(Enumerable.Repeat("\n", 100));
             byte[] buffer = new byte[1024];
-            foreach (User u in server.UserManager.activeUsers)
+            foreach (User u in server.userManager.activeUsers)
             {
                 u.Client.GetStream().Write(System.Text.Encoding.Unicode.GetBytes(clear), 0, clear.Length);
                 foreach (string message in server.messages)

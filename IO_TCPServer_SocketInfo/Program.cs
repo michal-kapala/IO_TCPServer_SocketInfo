@@ -8,7 +8,7 @@ namespace IO_TCPServer
         static void Main(string[] args)
         {
             ConsoleLogger.LogLevel = LogLevel.INFO;
-            SimpleTCPServer server = new SimpleTCPServer("127.0.0.1", 8010, 1024);
+            JsonTcpServer server = new JsonTcpServer("127.0.0.1", 8010, 1024);
             DBManager.Connect();
             server.Listen();
             server.AcceptClient();

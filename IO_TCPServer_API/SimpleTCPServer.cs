@@ -8,18 +8,9 @@ using System.Threading;
 
 namespace IO_TCPServer_API
 {
-    public class SimpleTCPServer
-    { 
-        TcpListener listener;
-        public delegate void TransmissionDelegate(TcpClient client);
-        UserManager userManager;
-        public UserManager UserManager { get => userManager; }
-        List<User> activeUsers;
-        public List<string> messages;
-        public List<User> Users { get; }
-        //Dictionary<int, TcpClient> clients;
-
-        public SimpleTCPServer(string ip, ushort port, uint bufferSize)
+    public class SimpleTCPServer : BaseServer
+    {
+        public SimpleTCPServer(string ip, ushort port, uint bufferSize) : base(ip, port, bufferSize)
         {
             listener = new TcpListener(IPAddress.Parse(ip), port);
             userManager = new UserManager();
@@ -27,7 +18,7 @@ namespace IO_TCPServer_API
             messages = new List<string>();
         }
 
-        public void HandleConnection(TcpClient client)
+        override public void HandleConnection(TcpClient client)
         {
             byte[] buffer = new byte[1024];
             NetworkStream stream = client.GetStream();
@@ -56,7 +47,7 @@ namespace IO_TCPServer_API
                                 activeUsers.Add(new User(client, creds.Key, creds.Value));
                             break;
                         case "#chat":
-                            User user = UserManager.GetUser(client);
+                            User user = userManager.GetUser(client);
                             status = TextProtocol.Process(this, client, command, user.Login, null);
                             //chat loop
                             if (status == TextProtocol.Status.CHAT_JOIN)
@@ -94,7 +85,7 @@ namespace IO_TCPServer_API
                             client.Close();
                             return;
                         case TextProtocol.Status.WRONG_CREDENTIALS:
-                            UserManager.HandleWrongCredentials(this, client, command);
+                            userManager.HandleWrongCredentials(this, client, command);
                             break;
                     }
                 }
@@ -106,32 +97,6 @@ namespace IO_TCPServer_API
             {
                 ConsoleLogger.Log("Data transmission exception: " + e.ToString(), LogSource.SERVER, LogLevel.ERROR);
             }
-        }
-        public void TransmissionCallbackStub(IAsyncResult result)
-        {
-            ConsoleLogger.Log("Client " + TextProtocol.LastDCedClient + " connection has been closed", LogSource.SERVER, LogLevel.INFO);
-        }
-
-        public void Listen()
-        {
-            listener.Start();
-            ConsoleLogger.Log("Server is running", LogSource.SERVER, LogLevel.INFO);
-        }
-
-        public void AcceptClient()
-        {
-            while (true)
-            {
-                TcpClient client = listener.AcceptTcpClient();
-                ConsoleLogger.Log("New connection established: " + TextProtocol.GetSocketInfo(client, false), LogSource.SERVER, LogLevel.INFO);
-                TransmissionDelegate transDelegate = new TransmissionDelegate(HandleConnection);
-                transDelegate.BeginInvoke(client, TransmissionCallbackStub, client);
-            }
-        }
-
-        public void Stop()
-        {
-            listener.Stop();
         }
     }
 }
