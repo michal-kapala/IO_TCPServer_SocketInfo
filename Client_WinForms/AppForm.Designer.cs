@@ -226,6 +226,7 @@
             // 
             // chat
             // 
+            //usuniete this
             this.chat.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(238)));
             this.chat.Location = new System.Drawing.Point(13, 13);
             this.chat.Name = "chat";

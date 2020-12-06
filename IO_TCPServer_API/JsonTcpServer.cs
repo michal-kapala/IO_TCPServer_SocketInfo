@@ -31,8 +31,9 @@ namespace IO_TCPServer_API
             {
                 while ((dataSize = stream.Read(buffer, 0, buffer.Length)) != 0)
                 {
-                    Console.WriteLine(System.Text.Encoding.UTF8.GetString(buffer, 0, dataSize));
-                    JsonMessage request = JsonSerializer.Deserialize<JsonMessage>(System.Text.Encoding.UTF8.GetString(buffer, 0, dataSize));
+                    string m = System.Text.Encoding.UTF8.GetString(buffer, 0, dataSize);
+                    Console.WriteLine(m);
+                    JsonMessage request = JsonSerializer.Deserialize<JsonMessage>(m);
                     switch (request.type)
                     {
                         case "register":
@@ -42,7 +43,7 @@ namespace IO_TCPServer_API
                             break;
                         case "signin":
                             response = JsonProtocol.signin(request);
-                            if(response.status == "OK"){
+                            if(response.status == JsonMessageStatus.Ok){
                                 try
                                 {
                                     userManager.SignIn(client, request.username, request.password);

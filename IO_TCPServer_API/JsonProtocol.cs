@@ -12,13 +12,13 @@ namespace IO_TCPServer_API
     {
         public static JsonMessage disconnect(JsonMessage request)
         {
-            JsonMessage response = new JsonMessage(request.type, "OK");
+            JsonMessage response = new JsonMessage(request, JsonMessageStatus.Ok);
             return response;
         }
 
         public static JsonMessage message(JsonMessage request)
         {
-            JsonMessage response = new JsonMessage(request.type, "OK", username: request.username, chatMsg: request.chatMsg);
+            JsonMessage response = new JsonMessage(request, JsonMessageStatus.Ok);
             return response;
         }
 
@@ -28,12 +28,12 @@ namespace IO_TCPServer_API
             if (DBManager.AddUser(request.username, request.password))
             {
                 ConsoleLogger.Log("User " + request.username + " registered", LogSource.TEXT, LogLevel.INFO);
-                 response = new JsonMessage(request.type, "OK");
+                 response = new JsonMessage(request, JsonMessageStatus.Ok);
             }
             else
             {
                 ConsoleLogger.Log("User " + request.username + " already exists", LogSource.TEXT, LogLevel.ERROR);
-                response = new JsonMessage(request.type, "Err");
+                response = new JsonMessage(request, JsonMessageStatus.Err);
             }
             return response;
         }
@@ -44,11 +44,11 @@ namespace IO_TCPServer_API
             if (DBManager.ValidateUser(request.username, request.password))
             {
                 ConsoleLogger.Log("User " + request.username + " signed in.", LogSource.TEXT, LogLevel.INFO);
-                response = new JsonMessage(request.type, "OK");
+                response = new JsonMessage(request, JsonMessageStatus.Ok);
             }
             else
             {
-                response = new JsonMessage(request.type, "Err", request.username);
+                response = new JsonMessage(request, JsonMessageStatus.Err);
             }
             return response;
         }
