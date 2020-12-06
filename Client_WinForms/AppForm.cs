@@ -2,19 +2,32 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
+using System.Diagnostics;
 using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using System.Text.Json;
+using System.Net.Sockets;
 
 namespace AppForm
 {
     public partial class AppForm : Form
     {
+        TcpClient client;
+        NetworkStream stream;
+        byte[] request;
+        byte[] response;
+        int bytesRead;
         public AppForm()
         {
+
             InitializeComponent();
+            //Klient narazie w tej klasie żeby działało a potem się pomyśli nad podziałem jakoś frontu i api
+            client = new TcpClient("localhost", 8010);
+            stream = client.GetStream();
+            response = new byte[1024];
         }
 
         private void LoginForm_Load(object sender, EventArgs e)
@@ -38,8 +51,16 @@ namespace AppForm
                 return;
             }
             //TODO: opcjonalna wstępna walidacja po stronie klienta (długość loginu/hasła), jeśli tak to serwer potrzebuje to uwzględnić przy rejestracji
-            //TODO: request o login do serwera
+            //TODO: request o login do serwera 
+            // ^ chyba zrobione
             //...
+            Debug.WriteLine("Server login");
+            JsonMessage loginMessage = new JsonMessage("signin", username: txtLoginLogin.Text, password: txtLoginPass.Text);
+            request = JsonSerializer.SerializeToUtf8Bytes(loginMessage);
+            stream.Write(request, 0, request.Length);
+            bytesRead = stream.Read(response, 0, response.Length);
+            Debug.WriteLine(System.Text.Encoding.UTF8.GetString(response, 0, bytesRead));
+            JsonMessage responseJson = JsonSerializer.Deserialize<JsonMessage>(System.Text.Encoding.UTF8.GetString(response, 0, bytesRead));
             //TODO: if(zalogowany) panelChat.Visible = true;
             if (true) panelChat.Visible = true;
         }
