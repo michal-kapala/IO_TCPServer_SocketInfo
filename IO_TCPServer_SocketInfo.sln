@@ -7,6 +7,15 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IO_TCPServer_SocketInfo", "
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IO_TCPServer_API", "IO_TCPServer_API\IO_TCPServer_API.csproj", "{930CDD0E-F382-48D8-9388-3EAAE3C93FB4}"
 EndProject
+<<<<<<< Updated upstream:IO_TCPServer_SocketInfo.sln
+=======
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Client_WinForms", "Client_WinForms\Client_WinForms.csproj", "{5C1789B7-5C67-44C9-AECA-4BD13D39C29E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IO_TCPClient_API", "IO_TCPClient_API\IO_TCPClient_API.csproj", "{75B53A40-8C08-4701-A6B6-859250D92441}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JsonProtocol", "JsonProtocol\JsonProtocol.csproj", "{2F68869E-B362-4173-9B16-54B9B45B23E6}"
+EndProject
+>>>>>>> Stashed changes:IO_TCPServer_Chat.sln
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +30,21 @@ Global
 		{930CDD0E-F382-48D8-9388-3EAAE3C93FB4}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{930CDD0E-F382-48D8-9388-3EAAE3C93FB4}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{930CDD0E-F382-48D8-9388-3EAAE3C93FB4}.Release|Any CPU.Build.0 = Release|Any CPU
+<<<<<<< Updated upstream:IO_TCPServer_SocketInfo.sln
+=======
+		{5C1789B7-5C67-44C9-AECA-4BD13D39C29E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5C1789B7-5C67-44C9-AECA-4BD13D39C29E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5C1789B7-5C67-44C9-AECA-4BD13D39C29E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5C1789B7-5C67-44C9-AECA-4BD13D39C29E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{75B53A40-8C08-4701-A6B6-859250D92441}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{75B53A40-8C08-4701-A6B6-859250D92441}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{75B53A40-8C08-4701-A6B6-859250D92441}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{75B53A40-8C08-4701-A6B6-859250D92441}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2F68869E-B362-4173-9B16-54B9B45B23E6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2F68869E-B362-4173-9B16-54B9B45B23E6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2F68869E-B362-4173-9B16-54B9B45B23E6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2F68869E-B362-4173-9B16-54B9B45B23E6}.Release|Any CPU.Build.0 = Release|Any CPU
+>>>>>>> Stashed changes:IO_TCPServer_Chat.sln
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

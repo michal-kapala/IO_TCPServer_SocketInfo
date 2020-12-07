@@ -50,9 +50,15 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
+<<<<<<< Updated upstream:IO_TCPServer_SocketInfo/IO_TCPServer_SocketInfo.csproj
     <ProjectReference Include="..\IO_TCPServer_API\IO_TCPServer_API.csproj">
       <Project>{930cdd0e-f382-48d8-9388-3eaae3c93fb4}</Project>
       <Name>IO_TCPServer_API</Name>
+=======
+    <ProjectReference Include="..\IO_TCPClient_API\IO_TCPClient_API.csproj">
+      <Project>{75b53a40-8c08-4701-a6b6-859250d92441}</Project>
+      <Name>IO_TCPClient_API</Name>
+>>>>>>> Stashed changes:Client_WinForms/Client_WinForms.csproj
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
