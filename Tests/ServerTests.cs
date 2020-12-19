@@ -9,6 +9,9 @@ namespace Tests
     [TestClass]
     public class ServerTests
     {
+        string login = "abc";
+        string password = "123";
+
         [ClassInitialize]
         public static void Initialize(TestContext c)
         {
@@ -19,9 +22,8 @@ namespace Tests
         [TestMethod]
         public void JsonDisconnectResponse()
         {
-
-            JsonMessage expected = new JsonMessage("disconnect", JsonMessageStatus.Ok, "abc");
-            JsonMessage request = new JsonMessage("disconnect", username: "abc");
+            JsonMessage expected = new JsonMessage("disconnect", JsonMessageStatus.Ok, login);
+            JsonMessage request = new JsonMessage("disconnect", username: login);
             JsonMessage response = JsonProtocol.disconnect(request);
             Assert.AreEqual(JsonSerializer.Serialize(expected), JsonSerializer.Serialize(response), "Unexpected response");
         }
@@ -29,27 +31,90 @@ namespace Tests
         [TestMethod]
         public void JsonRegisterResponse()
         {
-            SQLiteCommand deleteUser = new SQLiteCommand("DELETE FROM users WHERE login='ab'", DBManager.connection);
-            deleteUser.ExecuteNonQuery();
-            deleteUser.Dispose();
+            SQLiteCommand deleteUser = new SQLiteCommand("DELETE FROM users WHERE login='" + login + "'", DBManager.connection);
+            if (DBManager.FindUser(login))
+            {
+                deleteUser.ExecuteNonQuery();
+                deleteUser.Dispose();
+            }
 
-            JsonMessage expected = new JsonMessage("register", JsonMessageStatus.Ok, "ab", "123");
-            JsonMessage request = new JsonMessage("register", username: "ab", password:"123");
+            JsonMessage expected = new JsonMessage("register", JsonMessageStatus.Ok, login, password);
+            JsonMessage request = new JsonMessage("register", username: login, password:password);
             JsonMessage response = JsonProtocol.register(request);
             Assert.AreEqual(JsonSerializer.Serialize(expected), JsonSerializer.Serialize(response), "Unexpected response");
+
+            deleteUser.ExecuteNonQuery();
+            deleteUser.Dispose();
         }
 
         [TestMethod]
         public void JsonRegisterResponseErr()
         {
-            if (!DBManager.FindUser("abcd"))
+            if (!DBManager.FindUser(login))
             {
-                DBManager.AddUser("abcd", "123");
+                DBManager.AddUser(login, password);
             }
-            JsonMessage expected = new JsonMessage("register", JsonMessageStatus.Err, "abcd", "123");
-            JsonMessage request = new JsonMessage("register", username: "abcd", password: "123");
+            JsonMessage expected = new JsonMessage("register", JsonMessageStatus.Err, login, password);
+            JsonMessage request = new JsonMessage("register", username: login, password: password);
             JsonMessage response = JsonProtocol.register(request);
             Assert.AreEqual(JsonSerializer.Serialize(expected), JsonSerializer.Serialize(response), "Unexpected response");
+
+            SQLiteCommand deleteUser = new SQLiteCommand("DELETE FROM users WHERE login='" + login + "'", DBManager.connection);
+            deleteUser.ExecuteNonQuery();
+            deleteUser.Dispose();
+        }
+
+        [TestMethod]
+        public void JsonSignInOk() //right login and password
+        {
+            if (!DBManager.FindUser(login)) { 
+                DBManager.AddUser(login, password);
+            }
+            JsonMessage expected = new JsonMessage("signin", JsonMessageStatus.Ok, login, password);
+            JsonMessage request = new JsonMessage("signin", username: login, password: password);
+            JsonMessage response = JsonProtocol.signin(request);
+            Assert.AreEqual(JsonSerializer.Serialize(expected), JsonSerializer.Serialize(response), "Unexpected response");
+
+            SQLiteCommand deleteUser = new SQLiteCommand("DELETE FROM users WHERE login='" + login + "'", DBManager.connection);
+            deleteUser.ExecuteNonQuery();
+            deleteUser.Dispose();
+        }
+
+
+        [TestMethod]
+        public void JsonSignInErrPassword() //wrong password
+        {
+            if (!DBManager.FindUser(login))
+            {
+                DBManager.AddUser(login, "1234");
+            }
+            JsonMessage expected = new JsonMessage("signin", JsonMessageStatus.Err, login, password);
+            JsonMessage request = new JsonMessage("signin", username: login, password: password);
+            JsonMessage response = JsonProtocol.signin(request);
+            Assert.AreEqual(JsonSerializer.Serialize(expected), JsonSerializer.Serialize(response), "Unexpected response");
+
+            SQLiteCommand deleteUser = new SQLiteCommand("DELETE FROM users WHERE login='" + login + "'", DBManager.connection);
+            deleteUser.ExecuteNonQuery();
+            deleteUser.Dispose();
+        }
+
+        [TestMethod]
+        public void JsonSignInErrLogin() //login does not exist
+        {
+            SQLiteCommand deleteUser = new SQLiteCommand("DELETE FROM users WHERE login='" + login + "'", DBManager.connection);
+            if (DBManager.FindUser(login))
+            {
+                deleteUser.ExecuteNonQuery();
+                deleteUser.Dispose();
+            }
+
+            JsonMessage expected = new JsonMessage("signin", JsonMessageStatus.Err, login, password);
+            JsonMessage request = new JsonMessage("signin", username: login, password: password);
+            JsonMessage response = JsonProtocol.signin(request);
+            Assert.AreEqual(JsonSerializer.Serialize(expected), JsonSerializer.Serialize(response), "Unexpected response");
+
+            deleteUser.ExecuteNonQuery();
+            deleteUser.Dispose();
         }
 
 
