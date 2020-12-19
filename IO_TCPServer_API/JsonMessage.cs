@@ -50,4 +50,5 @@ namespace IO_TCPServer_API
             this.chatMsg = chatMsg;
         }
     }
+
 }

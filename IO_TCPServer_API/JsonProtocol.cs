@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace IO_TCPServer_API
 {
-    class JsonProtocol
+    public class JsonProtocol
     {
         public static JsonMessage disconnect(JsonMessage request)
         {

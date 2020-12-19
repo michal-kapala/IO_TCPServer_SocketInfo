@@ -1,13 +1,15 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.28307.960
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30011.22
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IO_TCPServer", "IO_TCPServer_SocketInfo\IO_TCPServer.csproj", "{90F64285-61B6-4C05-9A72-4C0CF928A8A6}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IO_TCPServer_API", "IO_TCPServer_API\IO_TCPServer_API.csproj", "{930CDD0E-F382-48D8-9388-3EAAE3C93FB4}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Client_WinForms", "Client_WinForms\Client_WinForms.csproj", "{5C1789B7-5C67-44C9-AECA-4BD13D39C29E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tests", "Tests\Tests.csproj", "{3B3237C8-CE7F-4768-A79C-28E22EC739A7}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -27,6 +29,10 @@ Global
 		{5C1789B7-5C67-44C9-AECA-4BD13D39C29E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5C1789B7-5C67-44C9-AECA-4BD13D39C29E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{5C1789B7-5C67-44C9-AECA-4BD13D39C29E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3B3237C8-CE7F-4768-A79C-28E22EC739A7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3B3237C8-CE7F-4768-A79C-28E22EC739A7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3B3237C8-CE7F-4768-A79C-28E22EC739A7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3B3237C8-CE7F-4768-A79C-28E22EC739A7}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
