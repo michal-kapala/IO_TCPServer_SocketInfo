@@ -16,7 +16,6 @@ namespace Tests
         public static void Initialize(TestContext c)
         {
             DBManager.Connect();
-
         }
 
         [TestMethod]
@@ -37,7 +36,6 @@ namespace Tests
                 deleteUser.ExecuteNonQuery();
                 deleteUser.Dispose();
             }
-
             JsonMessage expected = new JsonMessage("register", JsonMessageStatus.Ok, login, password);
             JsonMessage request = new JsonMessage("register", username: login, password:password);
             JsonMessage response = JsonProtocol.register(request);
@@ -107,17 +105,24 @@ namespace Tests
                 deleteUser.ExecuteNonQuery();
                 deleteUser.Dispose();
             }
-
             JsonMessage expected = new JsonMessage("signin", JsonMessageStatus.Err, login, password);
             JsonMessage request = new JsonMessage("signin", username: login, password: password);
             JsonMessage response = JsonProtocol.signin(request);
             Assert.AreEqual(JsonSerializer.Serialize(expected), JsonSerializer.Serialize(response), "Unexpected response");
-
-            deleteUser.ExecuteNonQuery();
-            deleteUser.Dispose();
         }
 
-
-
+        [TestMethod]
+        public void JsonMessage()
+        {
+            if (!DBManager.FindUser(login))
+            {
+                DBManager.AddUser(login, password);
+            }
+            ChatMessage chat = new ChatMessage(login, "new message", "05/29/2015 5:50");
+            JsonMessage expected = new JsonMessage("message", JsonMessageStatus.Ok, username: login, chatMsg:chat);
+            JsonMessage request = new JsonMessage("message", username: login, chatMsg:chat);
+            JsonMessage response = JsonProtocol.message(request);
+            Assert.AreEqual(JsonSerializer.Serialize(expected), JsonSerializer.Serialize(response), "Unexpected response");
+        }
     }
 }
