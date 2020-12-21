@@ -1,0 +1,116 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ClassDiagram MajorVersion="1" MinorVersion="1">
+  <Class Name="IO_TCPServer_API.BaseServer" Collapsed="true">
+    <Position X="1.75" Y="0.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AIAAACAAAABAAEAAAAAAAAEIAIAAAAABIAgAAAAAAAA=</HashCode>
+      <FileName>BaseServer.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="IO_TCPServer_API.ChatMessage">
+    <Position X="4.75" Y="4.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAABAAAAAAAAAAAAAAAAAAEAAAAAAAAAAAQAAAAAAAA=</HashCode>
+      <FileName>ChatMessage.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="IO_TCPServer_API.Helper">
+    <Position X="10.75" Y="0.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAABAAAAAAAAAAQAAAAAAAQAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Helper.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="IO_TCPServer_API.JsonMessageStatus">
+    <Position X="4.75" Y="0.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAgAAAIBAAAAAAA=</HashCode>
+      <FileName>JsonMessage.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="IO_TCPServer_API.JsonMessage">
+    <Position X="6.75" Y="4.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAwAAAAAAAAAAAAAAAAAAAEAAAABAAAAAAAAAgAAAAA=</HashCode>
+      <FileName>JsonMessage.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="IO_TCPServer_API.JsonProtocol">
+    <Position X="6.75" Y="0.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAABAAAAAgAAAAAAAQAAAAAEACA=</HashCode>
+      <FileName>JsonProtocol.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="IO_TCPServer_API.JsonTcpServer">
+    <Position X="2.75" Y="1.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABAAgAAAAAAAA=</HashCode>
+      <FileName>JsonTcpServer.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="IO_TCPServer_API.ConsoleLogger">
+    <Position X="2.75" Y="4.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAgAAAIAAAAAAAAAAAA=</HashCode>
+      <FileName>Managers\ConsoleLogger.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="IO_TCPServer_API.DBManager">
+    <Position X="10.75" Y="4.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>gAAAAAAAAAAAAAAAAAABAIAAAAACAAAgCAAAAAAAAAA=</HashCode>
+      <FileName>Managers\DBManager.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="IO_TCPServer_API.UserManager">
+    <Position X="8.75" Y="4.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAACCAAABAAAAAAAAAAAAAAAAAAABAEAAAAAAAAQA=</HashCode>
+      <FileName>Managers\UserManager.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="IO_TCPServer_API.SimpleTCPServer">
+    <Position X="0.5" Y="1.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAgAAAAAAAA=</HashCode>
+      <FileName>SimpleTCPServer.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="IO_TCPServer_API.TextProtocol">
+    <Position X="8.75" Y="0.5" Width="1.5" />
+    <NestedTypes>
+      <Enum Name="IO_TCPServer_API.TextProtocol.Status" Collapsed="true">
+        <TypeIdentifier>
+          <NewMemberFileName>TextProtocol.cs</NewMemberFileName>
+        </TypeIdentifier>
+      </Enum>
+    </NestedTypes>
+    <TypeIdentifier>
+      <HashCode>AACAAAiAAAAIAAAAAgABBAAAAAAAAAAAAAAAAAAAgAA=</HashCode>
+      <FileName>TextProtocol.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="IO_TCPServer_API.User">
+    <Position X="12.75" Y="4.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAIAAAAAAAAAIAAAAAAABAAQAAAAEAQ=</HashCode>
+      <FileName>User.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Enum Name="IO_TCPServer_API.LogSource">
+    <Position X="0.5" Y="5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>gAAAAAAAAAAAAAAAAAAAAAAAAAAgAAEAAAAAAAAAABA=</HashCode>
+      <FileName>Managers\ConsoleLogger.cs</FileName>
+    </TypeIdentifier>
+  </Enum>
+  <Enum Name="IO_TCPServer_API.LogLevel">
+    <Position X="0.5" Y="3.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAABgAAAAAAAAAAAAAAAAAAAAAAAAAAABAAAAAA=</HashCode>
+      <FileName>Managers\ConsoleLogger.cs</FileName>
+    </TypeIdentifier>
+  </Enum>
+  <Font Name="Segoe UI" Size="9" />
+</ClassDiagram>
