@@ -11,6 +11,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Client_WinForms", "Client_W
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tests", "Tests\Tests.csproj", "{3B3237C8-CE7F-4768-A79C-28E22EC739A7}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JsonProtocol", "C:\Users\Michal\Desktop\JsonProtocol\JsonProtocol.csproj", "{2F68869E-B362-4173-9B16-54B9B45B23E6}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IO_TCPClient_API", "IO_TCPClient_API\IO_TCPClient_API.csproj", "{75B53A40-8C08-4701-A6B6-859250D92441}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -33,6 +37,14 @@ Global
 		{3B3237C8-CE7F-4768-A79C-28E22EC739A7}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{3B3237C8-CE7F-4768-A79C-28E22EC739A7}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{3B3237C8-CE7F-4768-A79C-28E22EC739A7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2F68869E-B362-4173-9B16-54B9B45B23E6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2F68869E-B362-4173-9B16-54B9B45B23E6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2F68869E-B362-4173-9B16-54B9B45B23E6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2F68869E-B362-4173-9B16-54B9B45B23E6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{75B53A40-8C08-4701-A6B6-859250D92441}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{75B53A40-8C08-4701-A6B6-859250D92441}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{75B53A40-8C08-4701-A6B6-859250D92441}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{75B53A40-8C08-4701-A6B6-859250D92441}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

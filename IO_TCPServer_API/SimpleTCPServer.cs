@@ -5,98 +5,414 @@ using System.IO;
 using System.Text.RegularExpressions;
 using System.Collections.Generic;
 using System.Threading;
+using System.Text;
+using JsonProtocol;
+using System.Text.Json;
 
 namespace IO_TCPServer_API
 {
-    public class SimpleTCPServer : BaseServer
+    public class SimpleTCPServer
     {
-        public SimpleTCPServer(string ip, ushort port, uint bufferSize) : base(ip, port, bufferSize)
+        public enum Status
+        {
+            SIGNED_IN,
+            WRONG_CREDENTIALS,
+            REGISTERED,
+            EXISTS,
+            HELP,
+            DISCONNECTED,
+            MSG_OK,
+            MSG_ERROR,
+            EXCEPTION,
+            CHAT_JOIN,
+            CHAT_LEAVE,
+            ALREADY_SIGNED_IN,
+            NO_SUCH_USER
+        };
+
+        TcpListener listener;
+        byte[] buffer;
+        const int bufferSize = 1024;
+        public delegate void TransmissionDelegate(TcpClient client);
+        public UserManager UserManager { get; set; }
+        public List<string> messages;
+        public List<User> Users { get; }
+
+        public SimpleTCPServer(string ip, ushort port, uint bufferSize)
         {
             listener = new TcpListener(IPAddress.Parse(ip), port);
-            userManager = new UserManager();
-            activeUsers = new List<User>();
-            messages = new List<string>();
+            buffer = new byte[bufferSize];
+            UserManager = new UserManager();
         }
 
-        override public void HandleConnection(TcpClient client)
+        public void SendData(TcpClient client)
         {
-            byte[] buffer = new byte[1024];
             NetworkStream stream = client.GetStream();
-            KeyValuePair<string, string> creds;
-            Regex sanitize = new Regex("[^a-zA-Z0-9#(+ +)]");
-            int dataSize;
-            TextProtocol.Status status = TextProtocol.Status.HELP;
             try
             {
-                TextProtocol.SendMsgToClient(client, TextProtocol.Help);
-                WAKE:
-                while ((dataSize = stream.Read(buffer, 0, buffer.Length)) != 0)
+                int dataSize;
+                bool bFirstCmd = true;
+                byte[] protocol = null;
+
+                try
                 {
-                    string command = System.Text.Encoding.UTF8.GetString(buffer, 0, dataSize);
-                    command = sanitize.Replace(command, "");
-                    switch (command)
+                    if (stream.DataAvailable)
                     {
-                        case "#register":
-                            creds = UserManager.GetCredentials(client);
-                            status = TextProtocol.Process(this, client, command, creds.Key, creds.Value);
-                            break;
-                        case "#signin":
-                            creds = UserManager.GetCredentials(client);
-                            status = TextProtocol.Process(this, client, command, creds.Key, creds.Value);
-                            if (status == TextProtocol.Status.SIGNED_IN)
-                                activeUsers.Add(new User(client, creds.Key, creds.Value));
-                            break;
-                        case "#chat":
-                            User user = userManager.GetUser(client);
-                            status = TextProtocol.Process(this, client, command, user.Login, null);
-                            //chat loop
-                            if (status == TextProtocol.Status.CHAT_JOIN)
+                        protocol = new byte[2];
+                        Helper.ReadNetStream(client, protocol, 0, protocol.Length);
+                    }
+
+                    //text protocol
+                    if (protocol == null)
+                    {
+                        //TEXT
+                        ConsoleLogger.Log(TextProtocol.GetSocketInfo(client, false) + " uses raw text protocol", LogSource.SERVER, LogLevel.DEBUG);
+                        byte[] startup = Encoding.UTF8.GetBytes("#h");
+
+                    WAKE_TEXT:
+                        while (client != null)
+                        {
+                            if (bFirstCmd)
                             {
-                                while ((dataSize = stream.Read(buffer, 0, buffer.Length)) != 0)
-                                {
-                                    string msg = System.Text.Encoding.UTF8.GetString(buffer, 0, dataSize);
-                                    msg = sanitize.Replace(msg, "");
-                                    if (msg == "#chat")
-                                        status = TextProtocol.Process(this, client, msg, user.Login, null);
-                                    if (status == TextProtocol.Status.CHAT_LEAVE)
-                                        break;
-                                    if (status == TextProtocol.Status.CHAT_JOIN)
-                                    {
-                                        messages.Add(user.Login + ": " + msg);
-                                        TextProtocol.BroadcastMessages(this);
-                                    }
-                                    while (!client.GetStream().DataAvailable && client != null) Thread.Sleep(500);
-                                }
+                                ProcessTextProtocol(client, startup);
+                                bFirstCmd = false;
                             }
-                            break;
-                        default:
-                            status = TextProtocol.Process(this, client, command, null, null);
-                            break;
+                            else
+                            {
+                                dataSize = 0;
+                                byte[] buffer = new byte[1024];
+                                //nothing changed, wait for data
+                                if (!stream.DataAvailable) break;
+                                dataSize = Helper.ReadNetStream(client, buffer, 0, buffer.Length);
+                                byte[] cmdBuffer = new byte[dataSize];
+                                for (int i = 0; i < dataSize; i++) cmdBuffer[i] = buffer[i];
+                                ProcessTextProtocol(client, cmdBuffer);
+                            }
+                        }
+                        while (!client.GetStream().DataAvailable) Thread.Sleep(500);
+                        goto WAKE_TEXT;
                     }
-                    switch(status)
+                    //binary protocol
+                    else
                     {
-                        default: break;
-                        case TextProtocol.Status.SIGNED_IN:
-                            break;
-                        case TextProtocol.Status.DISCONNECTED:
-                            client.Close();
-                            return;
-                        case TextProtocol.Status.EXCEPTION:
-                            client.Close();
-                            return;
-                        case TextProtocol.Status.WRONG_CREDENTIALS:
-                            userManager.HandleWrongCredentials(this, client, command);
-                            break;
+                        switch (protocol[0])
+                        {
+                            case 0x1F:
+                                switch (protocol[1])
+                                {
+                                    //JSON protocol header {0x1F, 0x1}
+                                    case 0x1:
+                                        //JSON
+                                        ConsoleLogger.Log(TextProtocol.GetSocketInfo(client, false) + " uses JSON protocol v1", LogSource.SERVER, LogLevel.DEBUG);
+                                        break;
+                                    default:
+                                        ConsoleLogger.Log("Unknown JSON protocol version: " + protocol[1].ToString("X2"), LogSource.SERVER, LogLevel.ERROR);
+                                        break;
+                                }
+                                break;
+                            default:
+                                ConsoleLogger.Log("Unknown protocol: " + protocol[0].ToString("X2"), LogSource.SERVER, LogLevel.ERROR);
+                                break;
+                        }
                     }
+                WAKE_BINARY:
+                    while (client != null)
+                    {
+                        dataSize = 0;
+                        byte[] buffer = new byte[1024];
+
+                        //wait for request
+                        while (!stream.DataAvailable) Thread.Sleep(500);
+
+                        //read request from stream
+                        dataSize = Helper.ReadNetStream(client, buffer, 0, buffer.Length);
+                        byte[] cmdBuffer = new byte[dataSize];
+                        for (int i = 0; i < dataSize; i++) cmdBuffer[i] = buffer[i];
+
+                        HandleJsonRequest(client, Encoding.UTF8.GetString(cmdBuffer));
+                    }
+                    while (!client.GetStream().DataAvailable) Thread.Sleep(1000);
+                    goto WAKE_BINARY;
                 }
-                while (!client.GetStream().DataAvailable) Thread.Sleep(1000);
-                goto WAKE;
-                
+                catch (IOException e)
+                {
+                    ConsoleLogger.Log("Data transmission exception: " + e.ToString(), LogSource.SERVER, LogLevel.ERROR);
+                }
+
             }
             catch (IOException e)
             {
                 ConsoleLogger.Log("Data transmission exception: " + e.ToString(), LogSource.SERVER, LogLevel.ERROR);
             }
+        }
+
+        /// <summary>
+        /// Processes JSON request and sends response.
+        /// </summary>
+        /// <param name="client"></param>
+        /// <param name="jsonRequest"></param>
+        public void HandleJsonRequest(TcpClient client, string jsonRequest)
+        {
+            ConsoleLogger.Log("Server received a JSON request:\n" + jsonRequest, LogSource.SERVER, LogLevel.DEBUG);
+            byte[] response = GetJsonResponseForRequest(client, jsonRequest);
+            if(response != null)
+            {
+                string resp = Encoding.UTF8.GetString(response);
+                ConsoleLogger.Log("Server sends JSON response:\n" + resp, LogSource.SERVER, LogLevel.DEBUG);
+                client.GetStream().Write(response, 0, response.Length);
+            }
+            else 
+            {
+                Status status = ProcessJsonRequest(client, jsonRequest);
+                if(status == Status.MSG_OK)
+                {
+                    ChatMessageRequest msgReq = JsonSerializer.Deserialize<ChatMessageRequest>(jsonRequest);
+                    ChatMessageResponse msgResp = new ChatMessageResponse(ChatMessageResponse.StatusId.Ok, msgReq.ChatMsg);
+                    response = msgResp.Json;
+                    ConsoleLogger.Log($"Server forwards chat message:\n{msgResp.ChatMsg.msg}", LogSource.SERVER, LogLevel.DEBUG);
+                    foreach (User u in UserManager.activeUsers)
+                    {
+                        u.Client.GetStream().Write(response, 0, response.Length);
+                    }            
+                }
+            }
+        }
+
+        public byte[] GetJsonResponseForRequest(TcpClient client, string jsonRequest)
+        {
+            byte[] response = null;
+            Status status = ProcessJsonRequest(client, jsonRequest);
+            switch (status)
+            {
+                //Sign up
+                case Status.REGISTERED:
+                    SignUpResponse signedUp = new SignUpResponse(
+                        SignUpResponse.StatusId.SignedUp,
+                        "You have been registered successfully!");
+                    response = signedUp.Json;
+                    break;
+                case Status.EXISTS:
+                    SignUpResponse alreadyExists = new SignUpResponse(
+                        SignUpResponse.StatusId.AlreadyExists,
+                        "You have been registered successfully!");
+                    response = alreadyExists.Json;
+                    break;
+                //Sign in
+                case Status.SIGNED_IN:
+                    SignInResponse signedIn = new SignInResponse(
+                        SignInResponse.StatusId.SignedIn,
+                        "You have been logged in.");
+                    response = signedIn.Json;
+                    break;
+                case Status.ALREADY_SIGNED_IN:
+                    SignInResponse alreadyLogged = new SignInResponse(
+                        SignInResponse.StatusId.AlreadyLoggedIn,
+                        "You are already logged onto a different client!");
+                    response = alreadyLogged.Json;
+                    break;
+                case Status.WRONG_CREDENTIALS:
+                    SignInResponse signInFailed = new SignInResponse(
+                        SignInResponse.StatusId.WrongCredentials,
+                        "Wrong login or password.");
+                    response = signInFailed.Json;
+                    break;
+                case Status.NO_SUCH_USER:
+                    SignInRequest req = JsonSerializer.Deserialize<SignInRequest>(jsonRequest);
+                    SignInResponse userNotFound = new SignInResponse(
+                        SignInResponse.StatusId.NotFound,
+                        $"User { req.Credentials.Login } hasnt been registered yet.");
+                    break;
+                //Message - process later
+                case Status.MSG_OK:
+                    break;
+                case Status.MSG_ERROR:
+                    break;
+                default: break;
+            }
+            if (response != null) response = Helper.AppendBufferSize(response);
+            return response;
+        }
+
+        public Status ProcessJsonRequest(TcpClient client, string json)
+        {
+            int index = json.IndexOf("\"Id\":") + 5;
+            string sub = json.Substring(index);
+            int id = int.Parse(sub.TrimEnd('}'));
+            switch ((RequestId)id)
+            {
+                case RequestId.SignUp:
+                    SignUpRequest signUp = JsonSerializer.Deserialize<SignUpRequest>(json);
+                    if (DBManager.AddUser(signUp.Credentials.Login, signUp.Credentials.Password))
+                    {
+                        ConsoleLogger.Log($"User { signUp.Credentials.Login } has been registered", LogSource.DB, LogLevel.INFO);
+                        return Status.REGISTERED;
+                    }
+                    else
+                    {
+                        ConsoleLogger.Log($"User { signUp.Credentials.Login } failed to sign up - username already registered", LogSource.DB, LogLevel.INFO);
+                        return Status.EXISTS;
+                    }
+                case RequestId.SignIn:
+                    try
+                    {
+                        SignInRequest signIn = JsonSerializer.Deserialize<SignInRequest>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                        if (!DBManager.FindUser(signIn.Credentials.Login))
+                        {
+                            ConsoleLogger.Log($"User { signIn.Credentials.Login } was not found", LogSource.DB, LogLevel.INFO);
+                            return Status.NO_SUCH_USER;
+                        }
+                        if (UserManager.GetUser(signIn.Credentials.Login) != null)
+                        {
+                            ConsoleLogger.Log($"User { signIn.Credentials.Login } is already logged onto different client!", LogSource.SERVER, LogLevel.INFO);
+                            return Status.ALREADY_SIGNED_IN;
+                        }
+                        if (DBManager.ValidateUser(signIn.Credentials.Login, signIn.Credentials.Password))
+                        {
+                            UserManager.SignIn(client, signIn.Credentials.Login, signIn.Credentials.Password);
+                            ConsoleLogger.Log($"User { signIn.Credentials.Login } logged in", LogSource.DB, LogLevel.INFO);
+                            return Status.SIGNED_IN;
+                        }
+                        else
+                        {
+                            ConsoleLogger.Log($"User { signIn.Credentials.Login } failed to log in - wrong password", LogSource.DB, LogLevel.DEBUG);
+                            return Status.WRONG_CREDENTIALS;
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        ConsoleLogger.Log("JSON deserialization exception:\n" + ex.ToString(), LogSource.SERVER, LogLevel.ERROR);
+                        return Status.EXCEPTION;
+                    }
+                case RequestId.ChatMessage:
+                    ChatMessageRequest msgReq = null;
+                    try
+                    {
+                        msgReq = JsonSerializer.Deserialize<ChatMessageRequest>(json);
+                    }
+                    catch(Exception ex)
+                    {
+                        ConsoleLogger.Log($"JSON deserialization exception:\n {ex}", LogSource.JSON, LogLevel.ERROR);
+                    }
+                    foreach(User u in UserManager.activeUsers)
+                    {
+                        if (u.Login == msgReq.ChatMsg.username) break;
+                        ConsoleLogger.Log("Server received a chat message from an inactive user", LogSource.USER, LogLevel.ERROR);
+                        return Status.MSG_ERROR;
+                    }
+                    ConsoleLogger.Log("Server received a chat message from " + TextProtocol.GetSocketInfo(client, false), LogSource.JSON, LogLevel.DEBUG);
+                    return Status.MSG_OK;
+                default:
+                    ConsoleLogger.Log($"Unknown JSON request: {id}", LogSource.SERVER, LogLevel.ERROR);
+                    return Status.EXCEPTION;
+            }
+        }
+
+        Status ProcessTextProtocol(TcpClient client, byte[] cmdBuffer)
+        {
+            KeyValuePair<string, string> creds;
+            Regex sanitize = new Regex("[^a-zA-Z0-9#(+ +)]");
+            
+            TextProtocol.SendMsg(client, TextProtocol.tip);
+            Status status = Status.HELP;
+            string command = Helper.MakeString(cmdBuffer);
+            command = sanitize.Replace(command, "");
+
+            if (client != null
+                && status != Status.DISCONNECTED
+                && status != Status.EXCEPTION)
+            {
+                int dataSize = 0;
+                command = sanitize.Replace(command, "");
+
+                switch (command)
+                {
+                    case "#h":
+                        status = TextProtocol.ProcessCommand(this, client, command, null, null);
+                        break;
+                    case "#r":
+                        creds = UserManager.GetCredentials(client);
+                        status = TextProtocol.ProcessCommand(this, client, command, creds.Key, creds.Value);
+                        break;
+                    case "#s":
+                        creds = UserManager.GetCredentials(client);
+                        status = TextProtocol.ProcessCommand(this, client, command, creds.Key, creds.Value);
+                        if (status == Status.SIGNED_IN)
+                            UserManager.activeUsers.Add(new User(client, new Credentials(creds.Key, creds.Value)));
+                        break;
+                    case "#c":
+                        User user = UserManager.GetUser(client);
+                        status = TextProtocol.ProcessCommand(this, client, command, user.Login, null);
+                        //chat loop
+                        if (status == Status.CHAT_JOIN)
+                        {
+                            byte[] buffer = new byte[1024];
+                            while ((dataSize = client.GetStream().Read(buffer, 0, buffer.Length)) != 0)
+                            {
+                                string msg = System.Text.Encoding.UTF8.GetString(buffer, 0, dataSize);
+                                msg = sanitize.Replace(msg, "");
+                                if (msg == "#c")
+                                    status = TextProtocol.ProcessCommand(this, client, msg, user.Login, null);
+                                if (status == Status.CHAT_LEAVE)
+                                    break;
+                                if (status == Status.CHAT_JOIN)
+                                {
+                                    messages.Add(user.Login + ": " + msg);
+                                    TextProtocol.BroadcastMessages(this);
+                                }
+                                while (!client.GetStream().DataAvailable && client != null) Thread.Sleep(500);
+                            }
+                        }
+                        break;
+                    default:
+                        status = TextProtocol.ProcessCommand(this, client, command, null, null);
+                        break;
+                }
+                switch (status)
+                {
+                    default: break;
+                    case Status.HELP:
+                        break;
+                    case Status.SIGNED_IN:
+                        break;
+                    case Status.DISCONNECTED:
+                        client.Close();
+                        break;
+                    case Status.EXCEPTION:
+                        client.Close();
+                        break;
+                    case Status.WRONG_CREDENTIALS:
+                        UserManager.HandleWrongCredentials(this, client, command);
+                        break;
+                }
+            }
+            return status;
+        }
+
+        public void TransmissionCallbackStub(IAsyncResult result)
+        {
+            ConsoleLogger.Log(TextProtocol.LastDCedClient + " connection has been closed", LogSource.SERVER, LogLevel.INFO);
+        }
+
+        public void Listen()
+        {
+            listener.Start();
+            ConsoleLogger.Log("Server is running", LogSource.SERVER, LogLevel.INFO);
+        }
+
+        public void AcceptClient()
+        {
+            while (true)
+            {
+                TcpClient client = listener.AcceptTcpClient();
+                ConsoleLogger.Log("New connection established: " + TextProtocol.GetSocketInfo(client, false), LogSource.SERVER, LogLevel.INFO);
+                TransmissionDelegate transDelegate = new TransmissionDelegate(SendData);
+                transDelegate.BeginInvoke(client, TransmissionCallbackStub, client);
+            }
+        }
+
+        public void Stop()
+        {
+            listener.Stop();
         }
     }
 }

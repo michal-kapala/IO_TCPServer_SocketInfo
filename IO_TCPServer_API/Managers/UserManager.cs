@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Net.Sockets;
+using JsonProtocol;
 
 namespace IO_TCPServer_API
 {
@@ -36,9 +37,16 @@ namespace IO_TCPServer_API
             return new KeyValuePair<string, string>(login, password);
         }
 
-        public void SignIn(TcpClient client, string login, string password)
+        public bool SignIn(TcpClient client, string login, string password)
         {
-            activeUsers.Add(new User(client, login, password));
+            Credentials cr = new Credentials(login, password);
+            foreach(User u in activeUsers)
+            {
+                if (u.Login == login) return false;
+                
+            }
+            activeUsers.Add(new User(client, cr));
+            return true;
         }
 
         public void SignOut(string login)
@@ -57,7 +65,7 @@ namespace IO_TCPServer_API
         public User GetUser(string login)
         {
             foreach (User u in activeUsers) if (u.Login == login) return u;
-            ConsoleLogger.Log("User " + login + " not found", LogSource.USER, LogLevel.ERROR);
+            ConsoleLogger.Log("User " + login + " not found", LogSource.USER, LogLevel.INFO);
             return null;
         }
 
@@ -71,19 +79,19 @@ namespace IO_TCPServer_API
             return null;
         }
 
-        public TextProtocol.Status HandleWrongCredentials(SimpleTCPServer server, TcpClient client, string command)
+        public SimpleTCPServer.Status HandleWrongCredentials(SimpleTCPServer server, TcpClient client, string command)
         {
             try
             {
-                TextProtocol.SendMsgToClient(client, "Please register first:\n");
-                command = "#register";
+                TextProtocol.SendMsg(client, "Please register first:\n");
+                command = "#r";
                 KeyValuePair<string, string> creds = GetCredentials(client);
-                return TextProtocol.Process(server, client, command, creds.Key, creds.Value);
+                return TextProtocol.ProcessCommand(server, client, command, creds.Key, creds.Value);
             }
             catch(Exception ex)
             {
                 ConsoleLogger.Log("Exception:\n" + ex.ToString(), LogSource.USER, LogLevel.ERROR);
-                return TextProtocol.Status.EXCEPTION;
+                return SimpleTCPServer.Status.EXCEPTION;
             }
         }
     }

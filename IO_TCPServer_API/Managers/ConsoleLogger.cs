@@ -11,7 +11,8 @@ namespace IO_TCPServer_API
         SERVER,
         TEXT,
         DB,
-        USER
+        USER,
+        JSON
     }
 
     public enum LogLevel
@@ -41,6 +42,9 @@ namespace IO_TCPServer_API
                     break;
                 case LogSource.USER:
                     Console.WriteLine(DateTime.Now.ToString() + "\t[" + Enum.GetName(typeof(LogLevel), level) + "]\t[USER]\t\t" + text);
+                    break;
+                case LogSource.JSON:
+                    Console.WriteLine(DateTime.Now.ToString() + "\t[" + Enum.GetName(typeof(LogLevel), level) + "]\t[JSON]\t\t" + text);
                     break;
                 default: break;
             }

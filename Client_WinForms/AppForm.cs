@@ -13,6 +13,8 @@ using System.Net.Sockets;
 using System.Net;
 using System.Reflection;
 using System.Linq.Expressions;
+using IO_TCPClient;
+using JsonProtocol;
 
 namespace AppForm
 {
@@ -77,8 +79,9 @@ namespace AppForm
 
     public partial class AppForm : Form
     {
+        SimpleTCPClient simpleClient;
+
         TcpClient client;
-        NetworkStream stream;
         byte[] request;
         byte[] response;
         int bytesRead;
@@ -94,9 +97,9 @@ namespace AppForm
         {
 
             InitializeComponent();
+            simpleClient = new SimpleTCPClient(54321);
             //Klient narazie w tej klasie żeby działało a potem się pomyśli nad podziałem jakoś frontu i api
-            client = new TcpClient("localhost", 8010);
-            stream = client.GetStream();
+            client = simpleClient.tcpClient;
             response = new byte[1024];
             timeStart = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
         }
@@ -140,12 +143,13 @@ namespace AppForm
                 }));
                 chatState.sb.Append(Encoding.UTF8.GetString(chatState.buffer, 0, bytesRead));
                 Debug.WriteLine(text);
-                JsonMessage responseJson = JsonSerializer.Deserialize<JsonMessage>(chatState.sb.ToString());
-                Debug.WriteLine((responseJson.type == "message").ToString() + "  :  " + (responseJson.status == JsonMessageStatus.Ok).ToString());
-                if (responseJson.type == "message" && responseJson.status == JsonMessageStatus.Ok)
+                ChatMessageResponse chatMsgResp = JsonSerializer.Deserialize<ChatMessageResponse>(chatState.sb.ToString());
+                //JsonMessage responseJson = JsonSerializer.Deserialize<JsonMessage>(chatState.sb.ToString());
+                Debug.WriteLine((chatMsgResp.Id == ResponseId.ChatMessage).ToString() + "  :  " + (chatMsgResp.Status == ChatMessageResponse.StatusId.Ok).ToString());
+                if (chatMsgResp.Id == ResponseId.ChatMessage && chatMsgResp.Status == ChatMessageResponse.StatusId.Ok)
                 {
-                    DateTime time = timeStart.AddMilliseconds(long.Parse(responseJson.chatMsg.time)).ToLocalTime();
-                    chatState.chat.SetPropertyThreadSafe(() => chatState.chat.Text, text + "[" + time.TimeOfDay + "]  (" + responseJson.chatMsg.username + ")  { " + responseJson.chatMsg.msg + " }\n");
+                    DateTime time = timeStart.AddMilliseconds(long.Parse(chatMsgResp.ChatMsg.time)).ToLocalTime();
+                    chatState.chat.SetPropertyThreadSafe(() => chatState.chat.Text, text + "[" + time.TimeOfDay + "]  (" + chatMsgResp.ChatMsg.username + ")  { " + chatMsgResp.ChatMsg.msg + " }\n");
                     chatState.sb.Clear();
                 }
                 client.BeginReceive(chatState.buffer, 0, StateObject.BufferSize, 0, new AsyncCallback(ReceiveCallback), chatState);
@@ -164,7 +168,7 @@ namespace AppForm
         private void buttonSignIn_Click(object sender, EventArgs e)
         {
             labLoginError.Visible = false;
-            if (txtLoginLogin.Text.Length == 0 || txtLoginPass.Text == null)
+            if (txtLoginLogin.Text.Length == 0 || txtLoginLogin.Text == null)
             {
                 labLoginError.Text = "No login provided!";
                 labLoginError.Visible = true;
@@ -177,21 +181,37 @@ namespace AppForm
                 return;
             }
             //TODO: opcjonalna wstępna walidacja po stronie klienta (długość loginu/hasła), jeśli tak to serwer potrzebuje to uwzględnić przy rejestracji
-            //TODO: request o login do serwera 
-            // ^ chyba zrobione
             //...
-            Debug.WriteLine("Server login");
-            JsonMessage msg = new JsonMessage("signin", username: txtLoginLogin.Text, password: txtLoginPass.Text);
-            request = JsonSerializer.SerializeToUtf8Bytes(msg);
-            stream.Write(request, 0, request.Length);
-            bytesRead = stream.Read(response, 0, response.Length);
-            Debug.WriteLine(System.Text.Encoding.UTF8.GetString(response, 0, bytesRead));
-            JsonMessage responseJson = JsonSerializer.Deserialize<JsonMessage>(System.Text.Encoding.UTF8.GetString(response, 0, bytesRead));
-            if (responseJson.status == JsonMessageStatus.Ok)
+            //TODO: request o login do serwera
+            if (simpleClient.Connect("127.0.0.1", 8010))
             {
-                username = responseJson.username;
+                //TODO: send login request
+                if (!simpleClient.RequestSignIn(txtLoginLogin.Text, txtLoginPass.Text))
+                {
+                    labLoginError.Text = "Unexpected error while logging in.";
+                    labLoginError.Visible = true;
+                    return;
+                }
+            }
+            else
+            {
+                labLoginError.Text = "Failed to connect to the server!";
+                labLoginError.Visible = true;
+                return;
+            }
+            string jsonResponse = Helper.ReadIntoJson(simpleClient.tcpClient);
+            Tuple<string, bool> response = simpleClient.ProcessSignInResponse(jsonResponse);
+            
+            if (response.Item2)
+            {
+                username = txtLoginLogin.Text;
                 panelChat.Visible = true;
                 Receive(client.Client, chat);
+            }
+            else
+            {
+                labLoginError.Text = response.Item1;
+                labLoginError.Visible = true;
             }
         }
 
@@ -202,20 +222,10 @@ namespace AppForm
 
         private void buttonSend_Click(object sender, EventArgs e)
         {
-            JsonMessage msg = new JsonMessage("message", username: this.username, chatMsg: new ChatMessage(username, chatInput.Text, DateTimeOffset.Now.ToUnixTimeMilliseconds().ToString()));
-            Debug.WriteLine(chatInput.Text);
-            string t = JsonSerializer.Serialize(msg);
-            Debug.WriteLine(t);
-            request = JsonSerializer.SerializeToUtf8Bytes(msg);
-            stream.Write(request, 0, request.Length);
-            //bytesRead = stream.Read(response, 0, response.Length);
-            //Debug.WriteLine(System.Text.Encoding.UTF8.GetString(response, 0, bytesRead));
-            //JsonMessage responseJson = JsonSerializer.Deserialize<JsonMessage>(System.Text.Encoding.UTF8.GetString(response, 0, bytesRead));
-            //if (responseJson.status == JsonMessageStatus.Ok)
-            //{
-            //    DateTime time = timeStart.AddMilliseconds(long.Parse(responseJson.chatMsg.time)).ToLocalTime();
-            //    chat.Text += "[" + time.TimeOfDay + "](" + responseJson.chatMsg.username + "){ " + responseJson.chatMsg.msg + "}\n";
-            //}
+            if (chatInput.Text != "")
+            {
+                simpleClient.RequestChatMessage(username, chatInput.Text);
+            }
         }
 
         private void buttonClear_Click(object sender, EventArgs e)
@@ -258,9 +268,26 @@ namespace AppForm
                 return;
             }
             //TODO: request o rejestrację do serwera
-            //...
-            //TODO: if(zarejestrowany)
-            if(true)
+            if (simpleClient.Connect("127.0.0.1", 8010))
+            {
+                //send login request
+                if (!simpleClient.RequestSignUp(txtRegLogin.Text, txtRegPass.Text))
+                {
+                    labRegError.Text = "Unexpected error while logging in.";
+                    labRegError.Visible = true;
+                    return;
+                }
+            }
+            else
+            {
+                labRegError.Text = "Failed to connect to the server!";
+                labRegError.Visible = true;
+                return;
+            }
+
+            string jsonResponse = Helper.ReadIntoJson(simpleClient.tcpClient);
+            Tuple<string, bool> response = simpleClient.ProcessSignUpResponse(jsonResponse);
+            if (response.Item2)
             {
                 labRegError.ForeColor = Color.Green;
                 labRegError.Text = "You have been signed up";
@@ -268,7 +295,7 @@ namespace AppForm
             }
             else
             {
-                labRegError.Text = "Unexpected error occured, please try again";
+                labRegError.Text = response.Item1;
                 labRegError.Visible = true;
             }
         }

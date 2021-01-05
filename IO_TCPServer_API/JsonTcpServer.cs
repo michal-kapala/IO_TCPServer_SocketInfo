@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
+using JsonProtocol;
 
 namespace IO_TCPServer_API
 {
@@ -37,12 +38,12 @@ namespace IO_TCPServer_API
                     switch (request.type)
                     {
                         case "register":
-                            response = JsonProtocol.register(request);
+                            response = cJsonProtocol.register(request);
                             responseBytes = JsonSerializer.SerializeToUtf8Bytes(response);
                             stream.Write(responseBytes, 0, responseBytes.Length);
                             break;
                         case "signin":
-                            response = JsonProtocol.signin(request);
+                            response = cJsonProtocol.signin(request);
                             if(response.status == JsonMessageStatus.Ok){
                                 try
                                 {
@@ -57,12 +58,12 @@ namespace IO_TCPServer_API
                             stream.Write(responseBytes, 0, responseBytes.Length);
                             break;
                         case "disconnect":
-                            response = JsonProtocol.disconnect(request);
+                            response = cJsonProtocol.disconnect(request);
                             responseBytes = JsonSerializer.SerializeToUtf8Bytes(response);
                             stream.Write(responseBytes, 0, responseBytes.Length);
                             break;
                         case "message":
-                            response = JsonProtocol.message(request);
+                            response = cJsonProtocol.message(request);
                             responseBytes = JsonSerializer.SerializeToUtf8Bytes(response);
                             foreach(User user in userManager.activeUsers){
                                 user.Client.GetStream().Write(responseBytes, 0, responseBytes.Length);

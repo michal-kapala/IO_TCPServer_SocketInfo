@@ -5,10 +5,11 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Net.Sockets;
 using System.Security.Cryptography;
+using System.Threading;
 
-namespace IO_TCPServer_API
+namespace IO_TCPClient
 {
-    static class Helper
+    public static class Helper
     {
         //since NetworkStream.Read() doesnt wait for user input
         public static int ReadNetStream(TcpClient client, byte[] buffer, int offset, int bufSize)
@@ -32,19 +33,15 @@ namespace IO_TCPServer_API
 
         public static string MakeString(byte[] buffer)
         {
-            for (int i = 0; i < buffer.Length; i++)
+            for(int i = 0; i < buffer.Length; i++)
             {
                 // \r or \n
-                if ((uint)buffer[i] == 0xA || (uint)buffer[i] == 0xD)
+                if((uint)buffer[i] == 0xA || (uint)buffer[i] == 0xD)
                     buffer[i] = 0;
             }
 
             int index = 0;
-            while (index < buffer.Length)
-            {
-                if ((uint)buffer[index] == 0) break;
-                index++;
-            }
+            while((uint)buffer[index] != 0) index++;
             byte[] copy = new byte[index];
             for (int i = 0; i < index; i++) copy[i] = buffer[i];
             return System.Text.Encoding.UTF8.GetString(copy);
@@ -52,43 +49,31 @@ namespace IO_TCPServer_API
 
         public static string MakeSHA256Hash(string input)
         {
-            byte[] data = Encoding.UTF8.GetBytes(input);
+            byte[] data = Encoding.Unicode.GetBytes(input);
             byte[] hash = new byte[32];
             using (SHA256CryptoServiceProvider sha256 = new SHA256CryptoServiceProvider())
             {
                 hash = sha256.ComputeHash(data);
             }
-            string result = Encoding.UTF8.GetString(hash);
+            string result = Encoding.Unicode.GetString(hash);
             return result;
         }
 
         public static string ReadIntoJson(TcpClient client)
         {
+            while (!client.GetStream().DataAvailable) Thread.Sleep(500);
             byte[] sizeBuffer = new byte[4];
-            Helper.ReadNetStream(client, sizeBuffer, 0, sizeBuffer.Length);
-            if (BitConverter.IsLittleEndian) Array.Reverse(sizeBuffer);
+            ReadNetStream(client, sizeBuffer, 0, sizeBuffer.Length);
             int jsonSize = BitConverter.ToInt32(sizeBuffer, 0);
             byte[] jsonBuffer = new byte[jsonSize];
-            Helper.ReadNetStream(client, jsonBuffer, 0, jsonBuffer.Length);
+            ReadNetStream(client, jsonBuffer, 0, jsonBuffer.Length);
             return Encoding.UTF8.GetString(jsonBuffer);
         }
 
         public static byte[] AppendBufferSize(byte[] buffer)
         {
-            byte[] size = BitConverter.GetBytes(buffer.Length);
-            byte[] result = new byte[buffer.Length + size.Length];
-            int index = 0;
-            foreach (byte b in size)
-            {
-                result[index] = b;
-                index++;
-            }
-            foreach (byte b in buffer)
-            {
-                result[index] = b;
-                index++;
-            }
-
+            string concat = buffer.Length.ToString() + Encoding.UTF8.GetString(buffer);
+            byte[] result = Encoding.UTF8.GetBytes(concat);
             return result;
         }
     }

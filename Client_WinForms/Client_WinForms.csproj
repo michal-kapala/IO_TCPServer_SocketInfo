@@ -74,9 +74,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="AppForm.cs">
-      <SubType>Form</SubType>
-    </Compile>
+    <Compile Include="AppForm.cs" />
     <Compile Include="AppForm.Designer.cs">
       <DependentUpon>AppForm.cs</DependentUpon>
     </Compile>
@@ -109,6 +107,16 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\IO_TCPClient_API\IO_TCPClient_API.csproj">
+      <Project>{75b53a40-8c08-4701-a6b6-859250d92441}</Project>
+      <Name>IO_TCPClient_API</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\Users\Michal\Desktop\JsonProtocol\JsonProtocol.csproj">
+      <Project>{2f68869e-b362-4173-9b16-54b9b45b23e6}</Project>
+      <Name>JsonProtocol</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

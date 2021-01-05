@@ -8,6 +8,7 @@ using System.Text.Json.Serialization;
 
 namespace AppForm
 {
+    //zastapione ChatMessageRequest/Response
     public class JsonMessageStatus
     {
         public const string Ok = "ok";

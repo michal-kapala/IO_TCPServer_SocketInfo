@@ -7,101 +7,97 @@ using System.Linq;
 
 namespace IO_TCPServer_API
 {
-    public class TextProtocol
+    class TextProtocol
     {
-        public enum Status
-        {
-            SIGNED_IN,
-            WRONG_CREDENTIALS,
-            REGISTERED,
-            EXISTS,
-            HELP,
-            DISCONNECTED,
-            MESSAGE,
-            EXCEPTION,
-            CHAT_JOIN,
-            CHAT_LEAVE
-        };
-
         static string lastDcedClient = null;
-        public static string LastDCedClient => lastDcedClient ?? "null";
-        const string help = @"#help       display this list
-#signin      sign in to chat
-#register    register on chat
-#disconnect  terminate connection to chat
-> ";
-        public static string Help => help;
+        public static string LastDCedClient => lastDcedClient != null ? lastDcedClient : "null";
+        public const string tip = "Use '#help' for command list\n";
+        const string help = @"#h        display help
+#s      sign in to chat
+#r      register on chat
+#d      disconnect from chat
+#c      enter/leave chat";
 
-        public static Status Process(SimpleTCPServer server, TcpClient client, string command, string login, string password)
+        public static SimpleTCPServer.Status ProcessCommand(SimpleTCPServer server, TcpClient client, string command, string login, string password)
         {
-            NetworkStream stream = client.GetStream();
             switch (command)
             {
                 default:
-                    return Status.MESSAGE;
-                case "#help":
-                    SendMsgToClient(client, help);
+                    return SimpleTCPServer.Status.MSG_OK;
+                case "#h":
+                    SendMsg(client, help);
                     ConsoleLogger.Log("Sent help", LogSource.TEXT, LogLevel.INFO);
-                    return Status.HELP;
-                case "#chat":
-                    User user = server.userManager.GetUser(login);
+                    return SimpleTCPServer.Status.HELP;
+                case "#c":
+                    User user = server.UserManager.GetUser(login);
                     if(user == null)
                     {
-                        SendMsgToClient(client, "You're logged out, please sign in first.\n");
-                        return Status.WRONG_CREDENTIALS;
+                        SendMsg(client, "You're logged out, please sign in first.\n");
+                        return SimpleTCPServer.Status.WRONG_CREDENTIALS;
                     }
                     user.ChatMode = !user.ChatMode;
                     if (user.ChatMode)
                     {
                         ConsoleLogger.Log("User " + login + " joined chat", LogSource.USER, LogLevel.INFO);
-                        SendMsgToClient(client, "You've joined the chat.\n");
-                        return Status.CHAT_JOIN;
+                        SendMsg(client, "You've joined the chat.\n");
+                        return SimpleTCPServer.Status.CHAT_JOIN;
                     }
                     else
                     {
                         ConsoleLogger.Log("User " + login + "left chat", LogSource.USER, LogLevel.INFO);
-                        SendMsgToClient(client, "You've left the chat.\n");
-                        return Status.CHAT_LEAVE;
+                        SendMsg(client, "You've left the chat.\n");
+                        return SimpleTCPServer.Status.CHAT_LEAVE;
                     }
-                case "#signin":
+                case "#s":
                     if(DBManager.ValidateUser(login, password))
                     {
+                        bool bSignedIn = false;
                         try
                         {
-                            server.userManager.SignIn(client, login, password);
+                            bSignedIn = server.UserManager.SignIn(client, login, password);
                         }
                         catch(Exception ex)
                         {
                             ConsoleLogger.Log("Sign-in exception:\n" + ex.ToString(), LogSource.TEXT, LogLevel.ERROR);
                         }
-                        ConsoleLogger.Log("User " + login + " signed in.", LogSource.TEXT, LogLevel.INFO);
-                        SendMsgToClient(client, "You have been logged in.\n");
-                        return Status.SIGNED_IN;
+                        if(bSignedIn)
+                        {
+                            ConsoleLogger.Log($"User {login} signed in.", LogSource.TEXT, LogLevel.INFO);
+                            SendMsg(client, "You have been logged in.\n");
+                            return SimpleTCPServer.Status.SIGNED_IN;
+                        }
+                        else
+                        {
+                            ConsoleLogger.Log($"User {login} already logged in!", LogSource.TEXT, LogLevel.ERROR);
+                            SendMsg(client, "You are already in session!\n");
+                            return SimpleTCPServer.Status.ALREADY_SIGNED_IN;
+                        }
                     }
                     else
                     {
                         ConsoleLogger.Log("Wrong credentials from " + GetSocketInfo(client, false), LogSource.TEXT, LogLevel.INFO);
-                        SendMsgToClient(client, "Wrong login or password, please try again.\n");
-                        return Status.WRONG_CREDENTIALS;
+                        SendMsg(client, "Wrong login or password, please try again.\n");
+                        return SimpleTCPServer.Status.WRONG_CREDENTIALS;
                     }
-                case "#register":
+                case "#r":
                         if (DBManager.AddUser(login, password))
                         {
                             ConsoleLogger.Log("User " + login + " registered", LogSource.TEXT, LogLevel.INFO);
-                            SendMsgToClient(client, "You've been successfully registered.\n");
-                            return Status.REGISTERED;
+                            SendMsg(client, "You've been successfully registered.\n");
+                            return SimpleTCPServer.Status.REGISTERED;
                         }
                         else
                         { 
                             ConsoleLogger.Log("User " + login + " already exists", LogSource.TEXT, LogLevel.ERROR);
-                            SendMsgToClient(client, "Login is unavailable, please use a different one.\n");
-                            return Status.EXISTS;
+                            SendMsg(client, "Login is unavailable, please use a different one.\n");
+                            return SimpleTCPServer.Status.EXISTS;
                         }
-                case "#disconnect":
+                case "#d":
+                    server.UserManager.SignOut(login);
                     lastDcedClient = GetSocketInfo(client, false);
                     ConsoleLogger.Log("Client " + lastDcedClient + " disconnected from session", LogSource.TEXT, LogLevel.INFO);
-                    SendMsgToClient(client, "You have disconnected from server.\n");
-                    return Status.DISCONNECTED;
+                    SendMsg(client, "You have disconnected from server.\n");
+                    return SimpleTCPServer.Status.DISCONNECTED;
             }
         }
 
@@ -120,17 +116,17 @@ namespace IO_TCPServer_API
             return socketInfo;
         }
 
-        public static void SendMsgToClient(TcpClient client, string msg)
+        public static void SendMsg(TcpClient client, string msg)
         {
-            byte[] buffer = System.Text.Encoding.Unicode.GetBytes(msg);
-            foreach (byte b in buffer) client.GetStream().WriteByte(b);
+            byte[] m = System.Text.Encoding.Unicode.GetBytes(msg);
+            foreach (byte b in m) client.GetStream().WriteByte(b);
         }
 
         public static void BroadcastMessages(SimpleTCPServer server)
         {
-            string clear = String.Concat(Enumerable.Repeat("\n", 100));
+            string clear = string.Concat(Enumerable.Repeat("\n", 100));
             byte[] buffer = new byte[1024];
-            foreach (User u in server.userManager.activeUsers)
+            foreach (User u in server.UserManager.activeUsers)
             {
                 u.Client.GetStream().Write(System.Text.Encoding.Unicode.GetBytes(clear), 0, clear.Length);
                 foreach (string message in server.messages)
