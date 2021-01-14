@@ -82,9 +82,7 @@ namespace AppForm
         SimpleTCPClient simpleClient;
 
         TcpClient client;
-        byte[] request;
         byte[] response;
-        int bytesRead;
         string username;
         static DateTime timeStart;
         static StateObject chatState;

@@ -10,7 +10,7 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
 [assembly: AssemblyProduct("JsonProtocol")]
-[assembly: AssemblyCopyright("Copyright ©  2021")]
+[assembly: AssemblyCopyright("Copyright ©  2020")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
@@ -20,14 +20,14 @@ using System.Runtime.InteropServices;
 [assembly: ComVisible(false)]
 
 // Następujący identyfikator GUID jest identyfikatorem biblioteki typów w przypadku udostępnienia tego projektu w modelu COM
-[assembly: Guid("39de19c8-687d-4bfe-9ff8-9cbe07f854a3")]
+[assembly: Guid("2f68869e-b362-4173-9b16-54b9b45b23e6")]
 
 // Informacje o wersji zestawu zawierają następujące cztery wartości:
 //
 //      Wersja główna
 //      Wersja pomocnicza
 //      Numer kompilacji
-//      Poprawka
+//      Rewizja
 //
 // Możesz określić wszystkie wartości lub użyć domyślnych numerów kompilacji i poprawki
 // przy użyciu symbolu „*”, tak jak pokazano poniżej:

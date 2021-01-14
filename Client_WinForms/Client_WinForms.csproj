@@ -113,7 +113,7 @@
       <Project>{75b53a40-8c08-4701-a6b6-859250d92441}</Project>
       <Name>IO_TCPClient_API</Name>
     </ProjectReference>
-    <ProjectReference Include="C:\Users\Michal\Desktop\JsonProtocol\JsonProtocol.csproj">
+    <ProjectReference Include="..\JsonProtocol\JsonProtocol.csproj">
       <Project>{2f68869e-b362-4173-9b16-54b9b45b23e6}</Project>
       <Name>JsonProtocol</Name>
     </ProjectReference>

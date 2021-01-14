@@ -108,7 +108,7 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="C:\Users\Michal\Desktop\JsonProtocol\JsonProtocol.csproj">
+    <ProjectReference Include="..\JsonProtocol\JsonProtocol.csproj">
       <Project>{2f68869e-b362-4173-9b16-54b9b45b23e6}</Project>
       <Name>JsonProtocol</Name>
     </ProjectReference>
