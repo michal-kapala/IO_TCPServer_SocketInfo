@@ -17,7 +17,7 @@ namespace JsonProtocol
     public abstract class Response
     {
         [JsonInclude]
-        public ResponseId Id { get; set; }
+        public virtual ResponseId Id { get; set; }
         [JsonInclude]
         public abstract string StatusMsg { get; set; }
         [JsonIgnore]

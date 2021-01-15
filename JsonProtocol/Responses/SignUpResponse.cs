@@ -8,6 +8,7 @@ using System.Text.Json.Serialization;
 
 namespace JsonProtocol
 {
+
     public class SignUpResponse : Response
     {
         public enum StatusId
@@ -15,17 +16,18 @@ namespace JsonProtocol
             SignedUp,
             AlreadyExists
         }
-
+    
         [JsonInclude]
         public StatusId Status { get; set; }
         [JsonInclude]
         public override string StatusMsg { get; set; }
+        [JsonIgnore]
         public override byte[] Json { get; set; }
 
-        public SignUpResponse(StatusId status, string msg, ResponseId id = ResponseId.SignIn) : base(id)
+        public SignUpResponse(StatusId Status, string StatusMsg, ResponseId Id = ResponseId.SignIn) : base(Id)
         {
-            StatusMsg = msg;
-            Status = status;
+            StatusMsg = StatusMsg;
+            Status = Status;
             Json = JsonSerializer.SerializeToUtf8Bytes(this);
         }
     }

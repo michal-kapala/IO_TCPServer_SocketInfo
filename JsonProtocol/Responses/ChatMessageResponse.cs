@@ -19,18 +19,19 @@ namespace JsonProtocol
 
         [JsonInclude]
         public StatusId Status { get; set; }
-        [JsonIgnore]
+        [JsonInclude]
         public override string StatusMsg { get; set; }
         [JsonInclude]
         public ChatMessage ChatMsg { get; set; }
-
+        [JsonIgnore]
         public override byte[] Json { get; set; }
 
-        public ChatMessageResponse(StatusId status, ChatMessage msg, ResponseId id = ResponseId.ChatMessage) : base(id)
+        public ChatMessageResponse(StatusId Status, ChatMessage ChatMsg, ResponseId Id = ResponseId.ChatMessage) : base(Id)
         {
-            ChatMsg = msg;
-            Status = status;
-            Json = JsonSerializer.SerializeToUtf8Bytes(this);
+            this.ChatMsg = ChatMsg;
+            this.Status = Status;
+            this.StatusMsg = StatusMsg;
+            this.Json = JsonSerializer.SerializeToUtf8Bytes(this);
         }
     }
 }

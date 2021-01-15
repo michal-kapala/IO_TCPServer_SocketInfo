@@ -293,12 +293,12 @@ namespace IO_TCPServer_API
                     {
                         ConsoleLogger.Log($"JSON deserialization exception:\n {ex}", LogSource.JSON, LogLevel.ERROR);
                     }
-                    foreach(User u in UserManager.activeUsers)
-                    {
-                        if (u.Login == msgReq.ChatMsg.username) break;
-                        ConsoleLogger.Log("Server received a chat message from an inactive user", LogSource.USER, LogLevel.ERROR);
-                        return Status.MSG_ERROR;
-                    }
+                    //foreach(User u in UserManager.activeUsers)
+                    //{
+                    //    if (u.Login == msgReq.ChatMsg.username) break;
+                    //    ConsoleLogger.Log("Server received a chat message from an inactive user", LogSource.USER, LogLevel.ERROR);
+                    //    return Status.MSG_ERROR;
+                    //}
                     ConsoleLogger.Log("Server received a chat message from " + TextProtocol.GetSocketInfo(client, false), LogSource.JSON, LogLevel.DEBUG);
                     return Status.MSG_OK;
                 default:

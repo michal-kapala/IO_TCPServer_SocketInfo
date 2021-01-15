@@ -28,7 +28,7 @@ namespace IO_TCPClient
 
         public bool Connect(string serverAddress, ushort serverPort)
         {
-            if (!tcpClient.Connected)
+            while(!tcpClient.Connected)
             {      
                 try
                 {
@@ -105,7 +105,7 @@ namespace IO_TCPClient
 
         public bool RequestChatMessage(string user, string msg)
         {
-            ChatMessage chatMsg = new ChatMessage(user, msg, DateTime.Now.ToString());
+            ChatMessage chatMsg = new ChatMessage(user, msg, DateTime.Now.Millisecond.ToString());
             return SendRequest(chatMsg, RequestId.ChatMessage);
         }
 

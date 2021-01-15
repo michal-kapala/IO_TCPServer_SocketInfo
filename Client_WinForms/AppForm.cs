@@ -87,15 +87,16 @@ namespace AppForm
         static DateTime timeStart;
         static StateObject chatState;
 
+        Random r;
         private static ManualResetEvent receiveDone =
         new ManualResetEvent(false);
         private static string asyncResponse = String.Empty;
 
         public AppForm()
         {
-
+            r = new Random();
             InitializeComponent();
-            simpleClient = new SimpleTCPClient(54321);
+            simpleClient = new SimpleTCPClient((ushort)(3000 + r.Next()));
             //Klient narazie w tej klasie żeby działało a potem się pomyśli nad podziałem jakoś frontu i api
             client = simpleClient.tcpClient;
             response = new byte[1024];
@@ -138,9 +139,9 @@ namespace AppForm
                 string text = string.Empty;
                 chatState.chat.BeginInvoke(new MethodInvoker(delegate {
                     text = chatState.chat.Text;
+                    Debug.WriteLine(text);
                 }));
                 chatState.sb.Append(Encoding.UTF8.GetString(chatState.buffer, 0, bytesRead));
-                Debug.WriteLine(text);
                 ChatMessageResponse chatMsgResp = JsonSerializer.Deserialize<ChatMessageResponse>(chatState.sb.ToString());
                 //JsonMessage responseJson = JsonSerializer.Deserialize<JsonMessage>(chatState.sb.ToString());
                 Debug.WriteLine((chatMsgResp.Id == ResponseId.ChatMessage).ToString() + "  :  " + (chatMsgResp.Status == ChatMessageResponse.StatusId.Ok).ToString());
