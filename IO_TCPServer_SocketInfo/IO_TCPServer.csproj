@@ -98,6 +98,7 @@
     <None Include="App.config" />
     <None Include="DiagramKlas.cd" />
     <None Include="packages.config" />
+    <None Include="Wymagania_serwera.docx" />
     <None Include="Wymagania_serwera.pdf" />
   </ItemGroup>
   <ItemGroup>
